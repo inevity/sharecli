@@ -23,7 +23,9 @@ extern crate tokio;
 use clap::{App, Arg, AppSettings};
 
 #[tokio::main]
-async fn main() {
+//async fn main() -> Result<(), std::io::Error> {
+// Box any error
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // *NOTE:* You can actually achieve the best of both worlds by using Arg::from() (instead of Arg::with_name())
     // and *then* setting any additional properties.
     //
@@ -185,8 +187,21 @@ async fn main() {
                     println!("this post url {} will be deleted", delete_matches.value_of("post").unwrap());
                     // call lib ghost
                    // let resp = ghost::delete().await();
-                    let resp = ghost::delete().await;
+                    // let resp: std::collections::HashMap<std::string::String, std::string::String> = ghost::delete().await?;
+                    let resp = ghost::delete().await?;
+                    //let resp: u32 = ghost::delete().await?;
                     println!("{:#?}", resp); //mean
+
+                  // no need all below becaseu we have use the ? and last OK(()) to return result.
+                  //  let resp = match resp {
+                  //      Ok(res) => {
+                  //          println!("resp in match: {}", res);
+                  //      },
+                  //      Err(error) => {
+                  //          panic!("Problem deleting post : {:?}", error)
+                  //      },
+                  //  };
+                    //Ok(()) // why cannot add this 
 
                 }
                 _ => unreachable!(),
@@ -235,5 +250,6 @@ async fn main() {
     }
 
     // Continued program logic goes here...
+    Ok(())
 }
 
