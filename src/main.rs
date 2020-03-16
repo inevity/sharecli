@@ -16,6 +16,7 @@
 // }
 
 //extern crate calp;
+extern crate ghost;
 extern crate clap;
 use clap::{App, Clap, Arg, AppSettings};
 
@@ -180,6 +181,8 @@ fn main() {
                     // Now we have a reference to delete's matches
                     println!("this post url {} will be deleted", delete_matches.value_of("post").unwrap());
                     // call lib ghost
+                    ghost::delete();
+
                 }
                 _ => unreachable!(),
             }
