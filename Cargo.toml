@@ -1,0 +1,13 @@
+[package]
+name = "sharecli"
+version = "0.1.0"
+authors = ["Baul <roidinev@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#clap = "3.0.0-beat.1"
+clap = { git = "https://github.com/clap-rs/clap/" }
+ghost = { path = "src/ghost" }
+tokio = { version = "0.2", features = ["full"] }
