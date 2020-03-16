@@ -1,12 +1,15 @@
 use std::collections::HashMap;
-#[tokio::main]
-pub async fn delete() -> Result<(), Box<dyn std::error::Error>> {
+
+// #[tokio::main]
+//pub async fn delete() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn delete() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
     let resp = reqwest::get("https://httpbin.org/ip")
         .await?
         .json::<HashMap<String, String>>()
         .await?;
-    println!("{:#?}", resp);
-    Ok(())
+    //println!("{:#?}", resp); //mean
+    //Ok(())
+    Ok(resp)
   //  return resp; 
 }
 

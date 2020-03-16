@@ -18,9 +18,12 @@
 //extern crate calp;
 extern crate ghost;
 extern crate clap;
-use clap::{App, Clap, Arg, AppSettings};
+extern crate tokio;
+// use clap::{App, Clap, Arg, AppSettings};
+use clap::{App, Arg, AppSettings};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // *NOTE:* You can actually achieve the best of both worlds by using Arg::from() (instead of Arg::with_name())
     // and *then* setting any additional properties.
     //
@@ -181,7 +184,9 @@ fn main() {
                     // Now we have a reference to delete's matches
                     println!("this post url {} will be deleted", delete_matches.value_of("post").unwrap());
                     // call lib ghost
-                    ghost::delete();
+                   // let resp = ghost::delete().await();
+                    let resp = ghost::delete().await;
+                    println!("{:#?}", resp); //mean
 
                 }
                 _ => unreachable!(),
