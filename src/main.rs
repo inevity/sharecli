@@ -115,6 +115,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                  .required(true),
                          ),
                 )
+                .subcommand(
+                    App::new("list") 
+                         .about("list posts")  
+                         .version("0.1") 
+                         .author("baul")
+                         .arg(
+                             Arg::with_name("posts") // And their own arguments
+                                 .help("list post")
+                                 .index(1)
+                                 .required(true),
+                         ),
+                )
         )
         .get_matches();
 
@@ -203,6 +215,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                   //  };
                     //Ok(()) // why cannot add this 
 
+                }
+                ("list", Some(list_matches)) => {
+                    // Now we have a reference to list's matches
+                    println!("to list posts/pages { }", list_matches.value_of("posts").unwrap());
+                    // call lib ghost
+                    // why need await ,only no use some await
+                    let resp = ghost::list().await?;
+                    println!("list post {:#?}", resp); //mean
                 }
                 _ => unreachable!(),
             }

@@ -1,4 +1,98 @@
+// extern crate chrono
 use std::collections::HashMap;
+
+use chrono::prelude::*;
+
+use serde::{Deserialize, Serialize};
+
+use jsonwebtoken::errors::ErrorKind;
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+
+#[derive(Debug, Serialize, Deserialize)]
+//struct Claims {
+////    sub: String,
+////    company: String,
+////    exp: usize,
+//    iat:,
+//    exp: usize,
+//    aud: String,
+//
+//}
+struct Claims {
+    #[serde(with = "jwt_numeric_date")]
+    iat: DateTime<Utc>,
+    #[serde(with = "jwt_numeric_date")]
+    exp: DateTime<Utc>,
+    aud: String,
+}
+mod jwt_numeric_date {
+    //! Custom serialization of DateTime<Utc> to conform with the JWT spec (RFC 7519 section 2, "Numeric Date")
+    use chrono::{DateTime, TimeZone, Utc};
+    use serde::{self, Deserialize, Deserializer, Serializer};
+
+    /// Serializes a DateTime<Utc> to a Unix timestamp (milliseconds since 1970/1/1T00:00:00T)
+    pub fn serialize<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let timestamp = date.timestamp();
+        serializer.serialize_i64(timestamp)
+    }
+
+    /// Attempts to deserialize an i64 and use as a Unix timestamp
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Utc.timestamp_opt(i64::deserialize(deserializer)?, 0)
+            .single() // If there are multiple or no valid DateTimes from timestamp, return None
+            .ok_or_else(|| serde::de::Error::custom("invalid Unix timestamp value"))
+    }
+
+    #[cfg(test)]
+    mod tests {
+        const EXPECTED_TOKEN: &str = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJDdXN0b20gRGF0ZVRpbWUgc2VyL2RlIiwiaWF0IjowLCJleHAiOjMyNTAzNjgwMDAwfQ.RTgha0S53MjPC2pMA4e2oMzaBxSY3DMjiYR2qFfV55A";
+
+        use super::super::{Claims, SECRET};
+
+        #[test]
+        fn round_trip() {
+            let sub = "Custom DateTime ser/de".to_string();
+            let iat = Utc.timestamp(0, 0);
+            let exp = Utc.timestamp(32503680000, 0);
+
+            let claims = Claims { sub: sub.clone(), iat, exp };
+
+            let token =
+                encode(&Header::default(), &claims, &EncodingKey::from_secret(SECRET.as_ref()))
+                    .expect("Failed to encode claims");
+
+            assert_eq!(&token, EXPECTED_TOKEN);
+
+            let decoded = decode::<Claims>(
+                &token,
+                &DecodingKey::from_secret(SECRET.as_ref()),
+                &Validation::default(),
+            )
+            .expect("Failed to decode token");
+
+            assert_eq!(decoded.claims, claims);
+        }
+
+        #[test]
+        fn should_fail_on_invalid_timestamp() {
+            // A token with the expiry of i64::MAX + 1
+            let overflow_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJDdXN0b20gRGF0ZVRpbWUgc2VyL2RlIiwiaWF0IjowLCJleHAiOjkyMjMzNzIwMzY4NTQ3NzYwMDB9.G2PKreA27U8_xOwuIeCYXacFYeR46f9FyENIZfCrvEc";
+
+            let decode_result =
+                decode::<Claims>(&overflow_token, SECRET.as_ref(), &Validation::default());
+
+            assert!(decode_result.is_err());
+        }
+    }
+}
+
+
 
 // #[tokio::main]
 //pub async fn delete() -> Result<(), Box<dyn std::error::Error>> {
@@ -7,10 +101,61 @@ pub async fn delete() -> Result<HashMap<String, String>, Box<dyn std::error::Err
         .await?
         .json::<HashMap<String, String>>()
         .await?;
-    //println!("{:#?}", resp); //mean
+    //println!("{:#?}", resp); //mean is result enum
     //Ok(())
     Ok(resp)
-  //  return resp; 
+}
+//pub async fn list() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
+pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
+    let key = makereq().unwrap();
+    //let key = makereq();
+    println!("key: {}", format!("Ghost {:?}", key));
+  //  let mut  headers = reqwest::header::HeaderMap::new();
+   // headers.insert(Authorization, ("Ghost " + key).parse().unwrap());
+  //  headers.insert(Content-Type, "applicatin/json".parse().unwrap());
+   // assert!(headers.contains_key(Authoriaztion));
+
+    // let resp = reqwest::Client::new().get("http://localhost:2368/ghost/api/v3/admin/posts")
+  //  let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/api/v3/admin/posts")
+  //      //.headers(headers)
+  //      .header("Authorization", format!("Ghost {:?}", key))
+  //      .send()
+  //      .await?
+  //      .json::<HashMap<String, String>>()
+  //      .await?;
+    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/api/v3/admin/posts")
+    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/api/posts")
+    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts/?format=html")
+ //   #[derive(Deserialize)]
+ //   struct Posts {
+ //       origin: String,
+ //   }
+    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts/?type=published")
+   // let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts")
+   // ablove use the normal url,no admin domain,and use https
+    let resp = reqwest::Client::new().get("https://blog.approachai.com/ghost/api/v3/admin/posts")
+    
+        .header("Authorization", format!("Ghost {:?}", key.as_str()))
+        .header("Content-Type", "application/json")
+        .send()
+        .await?
+        //.json()
+        .text()
+        .await?;
+
+   // let resp : Posts = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts")
+   //     .header("Authorization", format!("Ghost {:?}", key))
+   //     .send()
+   //     .await?
+   //     //.json()?;
+   //     .json()
+   //     .await?;    
+    
+    // println!("{}", resp); //mean is result enum
+    println!("list resp {:#?}", resp); //mean is result enum
+    Ok(())
+    //Ok(resp)
+    //Ok(resp)
 }
 
 #[cfg(test)]
@@ -20,3 +165,38 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 }
+fn makereq() -> Result<String, Box<dyn std::error::Error>> {
+    let apikey = "***REMOVED***"; 
+    let v: Vec<&str> = apikey.split(':').collect();
+
+    /// assert_eq!(v, ["lion", "", "tiger", "leopard"]);
+    let id = v[0];
+    let secret = v[1];
+
+
+    let mut header = Header::default();
+    //header.kid = Some("signing_key".to_owned());
+    header.kid = Some(id.to_owned());
+//    header.alg = Algorithm::HS256;
+ //   header.typ = "JWT".to_owned();
+
+    let iat = Utc::now();
+    //let exp = iat + chrono::Duration::days(1);
+    // let exp = iat + 5 * 60;
+    let exp = iat + chrono::Duration::minutes(5);
+
+    let aud = "/v3/admin/".to_string();
+    let my_claims =
+        //Claims { iat, exp, aud: "/v3/admin".to_owned() };
+        Claims { iat, exp, aud: aud.clone() };
+
+    //as_bytes() or b''
+    let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret.as_bytes())) {
+        Ok(t) => t,
+        Err(_) => panic!(), // in practice you would return the error
+    };
+    println!("{:?}", token);
+    Ok(token)
+
+}
+
