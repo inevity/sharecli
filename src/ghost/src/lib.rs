@@ -1,8 +1,9 @@
 // extern crate chrono
 use std::collections::HashMap;
 
-use chrono::prelude::*;
+//use chrono::prelude::*;
 
+use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 //use serde_json::{Result, Value};
 // #[macro_use]
@@ -15,23 +16,20 @@ use serde_json::{Value, Error};
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
+//#[derive(Debug, Serialize, Deserialize)]
+//struct Claims {
+//    #[serde(with = "jwt_numeric_date")]
+//    iat: DateTime<Utc>,
+//    #[serde(with = "jwt_numeric_date")]
+//    exp: DateTime<Utc>,
+//    aud: String,
+//}
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    #[serde(with = "jwt_numeric_date")]
-    iat: DateTime<Utc>,
-    #[serde(with = "jwt_numeric_date")]
-    exp: DateTime<Utc>,
+struct Claim {
+    iat: i64,
+    exp: i64,
     aud: String,
 }
-//struct Claims {
-////    sub: String,
-////    company: String,
-////    exp: usize,
-//    iat:,
-//    exp: usize,
-//    aud: String,
-//
-//}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Post {
@@ -71,7 +69,7 @@ mod jwt_numeric_date {
         #[test]
         fn round_trip() {
             let sub = "Custom DateTime ser/de".to_string();
-            let iat = Utc.timestamp(0, 0);
+            let iat = Utc.timestamp(0, 0); //sinc sec, nsecs 0
             let exp = Utc.timestamp(32503680000, 0);
 
             let claims = Claims { sub: sub.clone(), iat, exp };
@@ -187,6 +185,8 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
 pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
+    println!("Author: {}", key);
+    //let () = key; String
     
 //    println!("key is : {}",key);
 //    let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
@@ -202,9 +202,9 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
 //
 //    println!("post resp {:#?}", resp); //mean is result enum
   let post_body = json!({
-                         "post": [
+                         "posts": [
                                      { 
-                                       "title": "test titel",
+                                       "title": "test titel"
                                      }  
                                  ],   
                        });
@@ -221,12 +221,12 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
 //       .send() //resposne
 //       .await?;
 
-   let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
+
+   let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts/")
        .header("Authorization", key.as_str())
        .header("Content-Type", "application/json")
        //.body("{"posts":[{"title":"Hello world"}]}")
        .json(&post_body)
-       //.body("aa")
        .send() //resposne
        .await?
        .text()
@@ -258,35 +258,58 @@ mod tests {
 }
 fn makereq() -> Result<String, Box<dyn std::error::Error>> {
     let apikey = "***REMOVED***"; 
+    //let apikey = String::from("***REMOVED***";
     let v: Vec<&str> = apikey.split(':').collect();
 
     /// assert_eq!(v, ["lion", "", "tiger", "leopard"]);
     let id = v[0];
     let secret = v[1];
+    println!("id {}, secret {}", id, secret); 
 
 
     let mut header = Header::default();
     //header.kid = Some("signing_key".to_owned());
     header.kid = Some(id.to_owned());
+    //header.kid = Some(id.to_string());
+     // println!("{}",header);
+     println!("{:#?}",header);
+     //() = id; //&str
+     //() = id.to_owned(); //String
 //    header.alg = Algorithm::HS256;
  //   header.typ = "JWT".to_owned();
 
-    let iat = Utc::now();
-    //let exp = iat + chrono::Duration::days(1);
-    // let exp = iat + 5 * 60;
-    let exp = iat + chrono::Duration::minutes(5);
+ //   let iat = Utc::now();
+ //   //let exp = iat + chrono::Duration::days(1);
+ //   // let exp = iat + 5 * 60;
+ //   let exp = iat + chrono::Duration::minutes(5);
+
+ //   let aud = "/v3/admin/".to_string();
+ //   let my_claims =
+ //       //Claims { iat, exp, aud: "/v3/admin".to_owned() };
+ //       Claims { iat, exp, aud: aud.clone() };
+    let iat = Utc::now().timestamp();
+    let exp = iat + 300;
 
     let aud = "/v3/admin/".to_string();
     let my_claims =
         //Claims { iat, exp, aud: "/v3/admin".to_owned() };
-        Claims { iat, exp, aud: aud.clone() };
+        Claim { iat: iat, exp: exp, aud: aud.clone() };
+        //Claim { iat, exp, aud: aud };
+
+    println!("my_claims: {:#?}", my_claims);
 
     //as_bytes() or b''
-    let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret.as_bytes())) {
+    // HS256 mean HMAC,not base64.
+    // from_secret(&[u8])
+    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret)) {
+    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(&secret.as_bytes())) {
+    //base64sectet.
+   // let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret.as_bytes())) {
+    let token = match encode(&header, &my_claims, &EncodingKey::from_base64_secret(secret.as_ref()).unwrap()) {
         Ok(t) => t,
         Err(_) => panic!(), // in practice you would return the error
     };
-    println!("{:?}", token);
+    println!("token : {:#?}", token);
     Ok(token)
 
 }
