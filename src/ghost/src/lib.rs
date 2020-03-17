@@ -4,11 +4,25 @@ use std::collections::HashMap;
 use chrono::prelude::*;
 
 use serde::{Deserialize, Serialize};
+//use serde_json::{Result, Value};
+// #[macro_use]
+//extern crate serde_json;
+use serde_json::json;
+use serde_json::{Value, Error};
+
+
 
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
 #[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    #[serde(with = "jwt_numeric_date")]
+    iat: DateTime<Utc>,
+    #[serde(with = "jwt_numeric_date")]
+    exp: DateTime<Utc>,
+    aud: String,
+}
 //struct Claims {
 ////    sub: String,
 ////    company: String,
@@ -18,13 +32,12 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 //    aud: String,
 //
 //}
-struct Claims {
-    #[serde(with = "jwt_numeric_date")]
-    iat: DateTime<Utc>,
-    #[serde(with = "jwt_numeric_date")]
-    exp: DateTime<Utc>,
-    aud: String,
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Post {
+   posts: Vec<HashMap<String, String>>,
 }
+
 mod jwt_numeric_date {
     //! Custom serialization of DateTime<Utc> to conform with the JWT spec (RFC 7519 section 2, "Numeric Date")
     use chrono::{DateTime, TimeZone, Utc};
@@ -107,9 +120,14 @@ pub async fn delete() -> Result<HashMap<String, String>, Box<dyn std::error::Err
 }
 //pub async fn list() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
 pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
-    let key = makereq().unwrap();
+    let rawkey = makereq().unwrap();
     //let key = makereq();
-    println!("key: {}", format!("Ghost {:?}", key));
+    println!("key: {:?}", format!("Ghost {:?}", rawkey));
+    println!("key: {:?}", format!("Ghost {}", rawkey));
+    //let key = format!("Ghost {:?}", rawkey);
+    let key = format!("Ghost {}", rawkey);
+    
+    println!("key is : {}",key);
   //  let mut  headers = reqwest::header::HeaderMap::new();
    // headers.insert(Authorization, ("Ghost " + key).parse().unwrap());
   //  headers.insert(Content-Type, "applicatin/json".parse().unwrap());
@@ -135,7 +153,10 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
    // ablove use the normal url,no admin domain,and use https
     let resp = reqwest::Client::new().get("https://blog.approachai.com/ghost/api/v3/admin/posts")
     
-        .header("Authorization", format!("Ghost {:?}", key.as_str()))
+        //.header("Authorization", format!("Ghost {:?}", key.as_str()))
+       // .header("Authorization", format!("Ghost {:?}", key.as_str()))
+        .header("Authorization", key.as_str())
+        //.header("Authorization", key)
         .header("Content-Type", "application/json")
         .send()
         .await?
@@ -153,9 +174,79 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
     
     // println!("{}", resp); //mean is result enum
     println!("list resp {:#?}", resp); //mean is result enum
+
+   // println!("list resp {:#?}", resp.json()); //mean is result enum
+    //let v: Value = serde_json::from_str(resp).unwrap()?;
+    //let v = serde_json::from_str(resp.as_ref()).unwrap()?;
+    let v = serde_json::from_str(resp.as_ref())?;
+   // println!("list resp {}", v);                                    
     Ok(())
     //Ok(resp)
     //Ok(resp)
+}
+pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
+    let rawkey = makereq().unwrap();
+    let key = format!("Ghost {}", rawkey);
+    
+//    println!("key is : {}",key);
+//    let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
+//        .header("Authorization", key.as_str())
+//        //.header("Authorization", key)
+//        .header("Content-Type", "application/json")
+//        .body("{"posts":[{"title":"Hello world"}]}")
+//        .send()
+//        .await?
+//        //.json()
+//        .text()
+//        .await?;
+//
+//    println!("post resp {:#?}", resp); //mean is result enum
+  let post_body = json!({
+                         "post": [
+                                     { 
+                                       "title": "test titel",
+                                     }  
+                                 ],   
+                       });
+
+   // let mut map = HashMap::new();
+   // map.insert("title", "test title");
+    //then json(&map);
+//   let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
+//       .header("Authorization", key.as_str())
+//       .header("Content-Type", "application/json")
+//       //.body("{"posts":[{"title":"Hello world"}]}")
+//       .json(&post_body)
+//       //.body("aa")
+//       .send() //resposne
+//       .await?;
+
+   let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
+       .header("Authorization", key.as_str())
+       .header("Content-Type", "application/json")
+       //.body("{"posts":[{"title":"Hello world"}]}")
+       .json(&post_body)
+       //.body("aa")
+       .send() //resposne
+       .await?
+       .text()
+       //.json()
+       .await?;
+
+       
+    println!("post resp is :  {:?}", resp);
+    let v: Value = serde_json::from_str(&resp)?;
+    println!("post resp json iss : {} ", v);
+    // invalid type: map, expected a string
+    // println!("post resp json is :  {:?}", serde_json::from_str(&resp)?);
+
+//for resopne print 
+//    match resp.status() {
+//        reqwest::StatusCode::OK => println!("success"),
+//        s => println!("status: {:?}",s),
+//     };
+
+    Ok(())
 }
 
 #[cfg(test)]

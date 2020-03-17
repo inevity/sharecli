@@ -104,6 +104,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .author("baul") // And authors
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
+                    App::new("post") 
+                         .about("post a blog")  
+                         .version("0.1") 
+                         .author("baul")
+                         .arg(
+                             Arg::with_name("blog") // And their own arguments
+                                 .help("the post to post")
+                                 .index(1)
+                                 .required(true),
+                         ),
+                )
+                .subcommand(
                     App::new("delete") 
                          .about("delete post")  
                          .version("0.1") 
@@ -194,6 +206,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("ghost", Some(ghost_matches)) => {
             // Now we have a reference to ghost's matches
             match ghost_matches.subcommand() {
+                ("post", Some(post_matches)) => {
+                    println!("to post posts/pages { }", post_matches.value_of("blog").unwrap());
+                    // call lib ghost
+                    // why need await ,only no use some await
+                    let resp = ghost::post().await?;
+                    println!("list post {:#?}", resp); //mean
+                }
+
                 ("delete", Some(delete_matches)) => {
                     // Now we have a reference to delete's matches
                     println!("this post url {} will be deleted", delete_matches.value_of("post").unwrap());
