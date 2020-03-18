@@ -1,0 +1,3 @@
+[submodule "jsonwebtoken"]
+	path = src/jsonwebtoken
+	url = ./src/jsonwebtoken
