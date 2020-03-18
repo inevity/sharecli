@@ -11,7 +11,7 @@ IFS=$TMPIFS
 
 # Prepare header and payload
 #NOW=$(date +'%s')
-NOW=1584498562
+NOW=1584504692
  
 FIVE_MINS=$(($NOW + 300))
 HEADER="{\"alg\": \"HS256\",\"typ\": \"JWT\", \"kid\": \"$ID\"}"
@@ -40,5 +40,5 @@ TOKEN="${header_payload}.${signature}"
 curl -H "Authorization: Ghost $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{"posts":[{"title":"Hello world"}]}' \
-"http://localhost:2368/ghost/api/v3/admin/posts/"
+"https://blog.approachai.com/ghost/api/v3/admin/posts/"
 

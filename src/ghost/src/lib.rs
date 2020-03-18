@@ -16,6 +16,12 @@ use serde_json::{Value, Error};
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
+extern crate frank_jwt;
+//#[macro_use] extern crate serde_json;
+//use frank_jwt::{Algorithm, encode, decode};
+//use frank_jwt::{Algorithm, encode, decode};
+
+
 //#[derive(Debug, Serialize, Deserialize)]
 //struct Claims {
 //    #[serde(with = "jwt_numeric_date")]
@@ -24,6 +30,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 //    exp: DateTime<Utc>,
 //    aud: String,
 //}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Claim {
     iat: i64,
@@ -287,30 +294,79 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
  //   let my_claims =
  //       //Claims { iat, exp, aud: "/v3/admin".to_owned() };
  //       Claims { iat, exp, aud: aud.clone() };
-    let iat = Utc::now().timestamp();
+   // let iat = Utc::now().timestamp();
+    let iat = 1584504692;
     let exp = iat + 300;
 
     let aud = "/v3/admin/".to_string();
     let my_claims =
         //Claims { iat, exp, aud: "/v3/admin".to_owned() };
-        Claim { iat: iat, exp: exp, aud: aud.clone() };
+        //Claim { iat: iat, exp: exp, aud: aud.clone() };
+        Claim { iat: iat, exp: exp, aud: "v3/admin".to_owned(), };
         //Claim { iat, exp, aud: aud };
 
     println!("my_claims: {:#?}", my_claims);
+    let j = serde_json::to_string(&my_claims)?;
+    println!("my_claims to_string {}", j);
 
-    //as_bytes() or b''
-    // HS256 mean HMAC,not base64.
-    // from_secret(&[u8])
-    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret)) {
-    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(&secret.as_bytes())) {
-    //base64sectet.
-   // let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret.as_bytes())) {
-    let token = match encode(&header, &my_claims, &EncodingKey::from_base64_secret(secret.as_ref()).unwrap()) {
+    let data = r#"
+    { "iat": 1584504692,
+      "exp": 1584504992,
+      "aud": "/v3/admin/"
+    }"#;
+    let my_claims : Claim = serde_json::from_str(data)?;
+    println!("my_claims from str : {:#?}", my_claims);
+
+//    //as_bytes() or b''
+//    // HS256 mean HMAC,not base64.
+//    // from_secret(&[u8])
+//    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret)) {
+//    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(&secret.as_bytes())) {
+//    //base64sectet.
+
+    let token1 = match encode(&header, &my_claims, &EncodingKey::from_secret(secret.as_bytes())) {
+   // let token1 = match encode(&header, &my_claims, &EncodingKey::from_base64_secret(secret.as_ref()).unwrap()) {
         Ok(t) => t,
         Err(_) => panic!(), // in practice you would return the error
     };
-    println!("token : {:#?}", token);
-    Ok(token)
+            let decoded = decode::<Claim>(
+                &token1,
+                &DecodingKey::from_secret(secret.as_ref()),
+                //&Validation::default(),
+                &Validation::new(Algorithm::HS256),
+            )
+            .expect("Failed to decode token");
+
+            //assert_eq!(decoded.claims, my_claims);
+
+            println!("decoded {:#?}", decoded);
+
+    println!("jwt1 token : {:#?}", token1);
+    let mut header2 = json!({
+                 "alg": "HS256",
+                 "typ": "JWT",
+                 //"kid": id.as_str(),
+                 "kid": id,
+    });
+    println!("jwt2 header2: {:#?}", header2);
+    let mut payload = json!({
+        "aud": aud.clone(),
+        "exp": exp,
+        "iat": iat,
+    });
+    println!("jwt2 payload: {:#?}", payload);
+
+
+    let token2 =  frank_jwt::encode(header2, &secret.to_owned(), &payload, frank_jwt::Algorithm::HS256).unwrap();
+    println!("jwt2 token : {:#?}", token2);
+   // let (header, payload) = frank_jwt::decode(&token2, &secret, frank_jwt::Algorithm::HS256, &ValidationOptions::default());
+    let decoded2 = frank_jwt::decode(&token2, &secret, frank_jwt::Algorithm::HS256, &frank_jwt::ValidationOptions::default());
+    let decoded3 = frank_jwt::validate_signature(&token2, &secret, frank_jwt::Algorithm::HS256)?;
+    println!("decoded2 {:#?}", decoded2);
+    println!("decoded3 {:#?}", decoded3);
+
+
+    Ok(token1)
 
 }
 
