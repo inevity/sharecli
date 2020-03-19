@@ -187,8 +187,6 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "frank_jwt"
 version = "3.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbb16e02df0e4d50ba30bda5ce2a8a781217858f3512578a64a425803327d77f"
 dependencies = [
  "base64 0.10.1",
  "openssl",
@@ -267,6 +265,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "frank_jwt",
+ "hex",
  "jsonwebtoken",
  "reqwest",
  "serde",
@@ -310,6 +309,12 @@ checksum = "1010591b26bbfe835e9faeabeb11866061cc7dcebffd56ad7d0942d0e61aefd8"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "hex"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 
 [[package]]
 name = "http"

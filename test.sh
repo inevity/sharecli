@@ -11,7 +11,8 @@ IFS=$TMPIFS
 
 # Prepare header and payload
 #NOW=$(date +'%s')
-NOW=1584504692
+#NOW=1584504692
+NOW=$1
  
 FIVE_MINS=$(($NOW + 300))
 HEADER="{\"alg\": \"HS256\",\"typ\": \"JWT\", \"kid\": \"$ID\"}"
