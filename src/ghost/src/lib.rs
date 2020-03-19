@@ -206,7 +206,7 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
 pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
-    println!("Author: {}", key);
+   // println!("Author: {}", key);
     //let () = key; String
     
 //    println!("key is : {}",key);
@@ -255,9 +255,9 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
        .await?;
 
        
-    println!("post resp is :  {:?}", resp);
+   // println!("post resp is :  {:#?}", resp);
     let v: Value = serde_json::from_str(&resp)?;
-    println!("post resp json iss : {} ", v);
+    println!("post resp json iss : {:#?} ", v);
     // invalid type: map, expected a string
     // println!("post resp json is :  {:?}", serde_json::from_str(&resp)?);
 
@@ -279,18 +279,14 @@ mod tests {
 }
 fn makereq() -> Result<String, Box<dyn std::error::Error>> {
     let apikey = "***REMOVED***"; 
-    //let apikey = String::from("***REMOVED***";
     let v: Vec<&str> = apikey.split(':').collect();
 
-    /// assert_eq!(v, ["lion", "", "tiger", "leopard"]);
     let id = v[0];
 
     let secrethex = v[1];
-    //() = v[1];
-    println!("id {}, secret {:?}", id, secrethex); 
+   // println!("id {}, secret {:?}", id, secrethex); 
     let secret = hex::decode(secrethex.to_owned())?;
 
-    // () = secret;
 
 
     let mut header = Header::default();
@@ -314,19 +310,15 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
  //       //Claims { iat, exp, aud: "/v3/admin".to_owned() };
  //       Claims { iat, exp, aud: aud.clone() };
     let iat = Utc::now().timestamp();
-   // let iat = 1584504692;
     let exp = iat + 300;
 
     let aud = "/v3/admin/".to_string();
     let my_claims =
-        //Claims { iat, exp, aud: "/v3/admin".to_owned() };
-        //Claim { iat: iat, exp: exp, aud: aud.clone() };
         Claim { iat: iat, exp: exp, aud: "/v3/admin/".to_owned(), };
-        //Claim { iat, exp, aud: aud };
 
 //    println!("my_claims: {:#?}", my_claims);
     let j = serde_json::to_string(&my_claims)?;
-    println!("my_claims to_string {}", j);
+//    println!("my_claims to_string {}", j);
 ////  to test weather encode same as the bash script ----
 // and in src/jsonwebtoken/src/serialization.rs to simulat the json as bash
 //    let data = r#"
@@ -366,7 +358,7 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
 
      //       println!("decoded {:#?}", decoded);
 
-    println!("jwt1 token : {:#?}", token1);
+    //println!("jwt1 token : {:#?}", token1);
 //  prank_jwt test-------    
 //  //cannot keep order why
 //   let mut header2 = json!({
@@ -396,7 +388,7 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
      // for hex stirng to decode
    //let token2 =  frank_jwt::encode(header2, &secret.to_string(), &payload, frank_jwt::Algorithm::HS256).unwrap();
    let token2 =  frank_jwt::encode(header2, &secret, &payload, frank_jwt::Algorithm::HS256).unwrap();
-   println!("jwt2 token : {:#?}", token2);
+  // println!("jwt2 token : {:#?}", token2);
   // let (header, payload) = frank_jwt::decode(&token2, &secret, frank_jwt::Algorithm::HS256, &ValidationOptions::default());
    let decoded2 = frank_jwt::decode(&token2, &secret, frank_jwt::Algorithm::HS256, &frank_jwt::ValidationOptions::default());
    let decoded3 = frank_jwt::validate_signature(&token2, &secret, frank_jwt::Algorithm::HS256)?;
