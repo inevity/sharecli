@@ -1,3 +1,4 @@
+mod api;
 // extern crate chrono
 use std::collections::HashMap;
 
@@ -18,7 +19,19 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 //extern crate hex;
 //use hex as Hex;
 extern crate frank_jwt;
-//#[macro_use] extern crate serde_json;
+
+
+extern crate chrono;
+extern crate reqwest;
+#[macro_use]
+extern crate serde;
+extern crate serde_json;
+extern crate serde_qs;
+extern crate url;
+pub mod endpoints;
+pub mod framework;
+
+//#macro_use] extern crate serde_json;
 //use frank_jwt::{Algorithm, encode, decode};
 //use frank_jwt::{Algorithm, encode, decode};
 

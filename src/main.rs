@@ -1,3 +1,108 @@
+//extern crate calp;
+extern crate ghost;
+extern crate clap;
+extern crate tokio;
+
+// use clap::{App, Clap, Arg, AppSettings};
+// use clap::{App, Arg, AppSettings};
+
+#[macro_use]
+extern crate maplit;
+// extern crate clap;
+// extern crate ghost;
+
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+//use ghost::endpoints::{posts, pages, users};
+use ghost::endpoints::{dns};
+use ghost::framework::{
+    apiclient::ApiClient,
+    auth::Credentials,
+    mock::{MockApiClient, NoopEndpoint},
+    response::{ApiFailure, ApiResponse, ApiResult},
+    Environment, HttpApiClient, HttpApiClientConfig, OrderDirection,
+};
+use serde::Serialize;
+use std::collections::HashMap;
+
+type SectionFunction<ApiClientType> = fn(&ArgMatches, &ApiClientType);
+
+// as subcommand
+// struct Section<'a, ApiClientType: Box<dyn ApiClient>> {// trait bound
+// struct Section<'a, ApiClientType: ApiClient> {// trait bound
+struct Section<'a, ApiClientType: ApiClient> {// trait bound
+    //args: Vec<Arg<'a, 'a>>,
+    args: Vec<Arg<'a>>,
+    description: &'a str,
+    function: Option<&'a SectionFunction<ApiClientType>>,
+    subcommands: Option<HashMap<&'a str, &'a Section<'a, ApiClientType>>>,
+}
+
+fn print_response<T: ApiResult>(response: ApiResponse<T>) {
+    match response {
+        Ok(success) => println!("Success: {:#?}", success),
+        Err(e) => match e {
+            ApiFailure::Error(status, errors) => {
+                println!("HTTP {}:",status);
+                for err in errors.errors {
+                    println!("Error {}: {}", err.code, err.message);
+                    for (k, v) in err.other {
+                        println!("{}: {}", k, v);
+                    }
+                }
+                for (k, v) in errors.other {
+                    println!("{}: {}", k, v);
+                }
+            }
+            ApiFailure::Invalid(reqwest_err) => println!("Error: {}", reqwest_err),
+        },
+    }
+}
+
+fn print_response_json<T: ApiResult>(response: ApiResponse<T>)
+where 
+    T: Serialize,
+{
+    match response {
+        Ok(success) => println!("{}", serde_json::to_string(&success.result).unwrap()),
+        Err(e) => match e {
+            ApiFailure::Error(status, errors) => {
+                println!("HTTP {}:",status);
+                for err in errors.errors {
+                    println!("Error {}: {}", err.code, err.message);
+                    for (k, v) in err.other {
+                        println!("{}: {}", k, v);
+                    }
+                }
+                for (k, v) in errors.other {
+                    println!("{}: {}", k, v);
+                }
+            }
+            ApiFailure::Invalid(reqwest_err) => println!("Error: {}", reqwest_err),
+        },
+
+    }
+}
+
+fn dns<ApiClientType: ApiClient>(arg_matches: &ArgMatches, api_client: &ApiClientType) {
+    let zone_identifier = arg_matches.value_of("zone_identifier").unwrap();
+    let response = api_client.request(&dns::ListDnsRecords {
+        zone_identifier,
+        params: dns::ListDnsRecordsParams {
+            direction: Some(OrderDirection::Ascending),
+            ..Default::default()
+        },
+    });
+    print_response(response);
+}
+
+fn mock_api<ApiClientType: ApiClient>(_args: &ArgMatches, _api: &ApiClientType) {
+    let mock_api = MockApiClient {};
+    let endpoint = NoopEndpoint {};
+    let _ = mock_api.request(&endpoint);
+    println!("ran mock API")
+}
+
+
 // use clap::{App, Clap};
 // 
 // #[derive(Clap)]
@@ -15,17 +120,114 @@
 //     greetings::hello();
 // }
 
-//extern crate calp;
-extern crate ghost;
-extern crate clap;
-extern crate tokio;
-// use clap::{App, Clap, Arg, AppSettings};
-use clap::{App, Arg, AppSettings};
-
 #[tokio::main]
 //async fn main() -> Result<(), std::io::Error> {
 // Box any error
+           // function: None,
+            //function: None::<SectionFunction<ApiClientType>>,
+            //subcommands: None::<HashMap<&'a str, &'a Section::<'a, ApiClientType>>>,
+            //subcommands: None::<HashMap<&'a str, &'a Section<'a, ApiClientType>>>,
+            //subcommands: None::<HashMap<&'a str, &'a Section<'a, ApiClient>>>,
+            //subcommands: None,
+// async fn main<'a>() -> Result<(), Box<dyn std::error::Error>> {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+        let test = &Section::<HttpApiClient> {// traite not type, must impl for 
+            args: vec![Arg::with_name("testcase").required(true)],
+            description: "test",
+            function: None::<&SectionFunction<HttpApiClient>>,
+            subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+        };
+        let delete = &Section::<HttpApiClient> {
+             args: vec![Arg::with_name("post").required(true)], 
+             description: "delete post",
+            function: None::<&SectionFunction<HttpApiClient>>,
+            subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+         };
+         let add = &Section::<HttpApiClient> {
+             args: vec![Arg::with_name("post").required(true)], 
+             description: "add post",
+             function: None::<&SectionFunction<HttpApiClient>>,
+             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+         };
+         let list = &Section::<HttpApiClient> {
+             args: vec![Arg::with_name("posts").required(true)], 
+             description: "list posts",
+             function: None::<&SectionFunction<HttpApiClient>>,
+             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+         };
+         let gsubcommands = hashmap! {
+             "delete" => delete,
+             "add" => add,
+             "list" => list,
+         };
+         let ghost = &Section::<HttpApiClient> {
+             args: vec![Arg::with_name("ghost").required(true)],
+             description: "op on the ghost blog platform",
+             function: None::<&SectionFunction<HttpApiClient>>,
+             subcommands: Some(gsubcommands), 
+         };
+    let sections = hashmap! {
+        // "test" => Section::<'a, Box<dyn ApiClient>> {
+        // "test" => &Section::<'a, ApiClient> {
+        // "test" => &Section::<&ApiClient>{
+        // "test" => &Section<ApiClientType: ApiClient> {
+            //function: None::<SectionFunction<ApiClientType: ApiClient>>,
+      //  "test" => &Section::<'a, HttpApiClient> {// traite not type, must impl for 
+      //      args: vec![Arg::with_name("testcase").required(true)],
+      //      description: "test",
+      //      function: None::<&SectionFunction<HttpApiClient>>,
+      //      subcommands: None::<HashMap<&'a str, &'a Section::<'a, HttpApiClient>>>,
+      //  },
+      //
+      // good
+     //   "test" => &Section::<HttpApiClient> {// traite not type, must impl for 
+     //       args: vec![Arg::with_name("testcase").required(true)],
+     //       description: "test",
+     //       function: None::<&SectionFunction<HttpApiClient>>,
+     //       subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+     //   },
+        "test" => test,
+        "ghost" => ghost,
+ //   
+ //       "ghost" => &Section {
+ //           args: vec![Arg::with_name("ghost").required(true)],
+ //           description: "op on the ghost blog platform",
+ //           function: None,
+ //           subcommands: Some(hashmap! {
+ //               "delete" => &Section {
+ //                   args: vec![Arg::with_name("post").required(true)], 
+ //                   description: "delete post",
+ //                 //  function: delete, 
+ //                   function: None,
+ //                   subcommands: None,
+ //               },
+ //               "add" => &Section {
+ //                   args: vec![Arg::with_name("post").required(true)], 
+ //                   description: "add post",
+ //                  // function: add,   
+ //                   function: None,
+ //                   subcommands: None,
+ //               },
+ //               "list" => &Section {
+ //                   args: vec![Arg::with_name("posts").required(true)], 
+ //                   description: "list posts",
+ //                   function: None,
+ //                   subcommands: None,
+ //                   //function: listposts,   
+ //               },
+ //           }),
+ //           // how add subcommands
+ //       },
+ //       "twitter" => &Section {
+ //           args: vec![Arg::with_name("twitter").required(true)],
+ //           description: "twitter op",
+ //           subcommands: None,
+ //           function: None,
+ //       },
+ //       
+    };
+
     // *NOTE:* You can actually achieve the best of both worlds by using Arg::from() (instead of Arg::with_name())
     // and *then* setting any additional properties.
     //
@@ -65,6 +267,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     - A subcommand unify
     //     - A subcommand hs
     //
+    /* 
     let matches = App::new("Share")
         .version("1.0")
         .author("baul <roidinev@gmail.com>")
@@ -141,6 +344,47 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
         )
         .get_matches();
+                                 */ 
+
+    let mut cli = App::new("Share")
+        .version("1.0")
+        .author("baul <roidinev@gmail.com>")
+        .about("The hub for blogger,publisher,indieWeber ")
+        .arg(
+            Arg::with_name("config")
+                .short('c')
+                .long("config")
+                .value_name("FILE")
+                .help("Sets a custom config file")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("output") 
+                .help("Sets an optional output file")
+                .index(1),
+        )
+        .arg(
+            Arg::with_name("debug")
+                .short('d')
+                .multiple(true)
+                .help("Turn debugging information on"),
+        )
+        .setting(AppSettings::ArgRequiredElseHelp);
+
+   for (section_name, section) in sections.iter() {
+       println!("section_name{}", section_name);
+       let mut subcommand = SubCommand::with_name(section_name).about(section.description);
+       for arg in &section.args {
+           subcommand = subcommand.arg(arg);
+       }
+       // loop the nest subcommand
+       cli = cli.subcommand(subcommand);
+   }
+
+
+
+
+    let matches = cli.get_matches();
 
     // You can check the value provided by positional arguments, or option arguments
     if let Some(o) = matches.value_of("output") {
@@ -292,4 +536,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Continued program logic goes here...
     Ok(())
 }
+
 
