@@ -70,6 +70,16 @@ struct Post {
    posts: Vec<HashMap<String, String>>,
 }
 
+#[derive(Debug, Deserialize)]
+struct Postl {
+    slug: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Data {
+    posts: Vec<Postl>,
+}
+
 mod jwt_numeric_date {
     //! Custom serialization of DateTime<Utc> to conform with the JWT spec (RFC 7519 section 2, "Numeric Date")
     use chrono::{DateTime, TimeZone, Utc};
@@ -190,6 +200,8 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
         .header("Authorization", key.as_str())
         //.header("Authorization", key)
         .header("Content-Type", "application/json")
+        .query(&[("fields","title,url,id,slug,status"),("limit","500"),("page", "1"),("status","draft")])
+        // tags some empty then panic
         .send()
         .await?
         //.json()
@@ -205,7 +217,35 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
    //     .await?;    
     
     // println!("{}", resp); //mean is result enum
-    println!("list resp {:#?}", resp); //mean is result enum
+  //  println!("list resp in lib ghost {:#?}", resp); //mean is result enum
+  //  println!("list resp in lib ghost end:#?"); //mean is result enum
+  //  println!("list resp in lib ghost {:?}", resp); //mean is result enum
+  //  println!("list resp in lib ghost end:?"); //mean is result enum
+
+    // now comments this 
+ //   println!("list resp in lib ghost {}", resp); //mean is result enum
+  //  println!("list resp in lib ghost end"); //mean is result enum
+    println!("slug {:#?}", serde_json::from_str::<Value>(&resp));
+    let v: Value = serde_json::from_str(&resp)?;
+    println!("posts meta: {}", v["meta"]);
+    //println!("slug {}", v["posts"][0]["slug"]);
+    //let v["posts"] = ();
+    println!("is{}", v["posts"].is_array());
+    //for slug in v["posts"].as_array().iter() {
+    //for slug in v["posts"].into_iter() {
+    //for slug in v["posts"] {
+    //   println!("slug: {}", slug["slug"]);
+    //
+    //}
+    let data: Data = serde_json::from_str(&resp).unwrap();
+    for post in data.posts {
+       println!("slug: {}", post.slug);
+    }
+  //  println!("meta: {}", data.metata);
+
+
+    // have json value remine why
+    //println!("slug {:#?}", serde_json::from_str::<Value>(&resp).unwrap().to_string());
 
    // println!("list resp {:#?}", resp.json()); //mean is result enum
     //let v: Value = serde_json::from_str(resp).unwrap()?;
