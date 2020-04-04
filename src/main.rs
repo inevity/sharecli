@@ -135,7 +135,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let test = &Section::<HttpApiClient> {// traite not type, must impl for 
             args: vec![Arg::with_name("testcase").required(true)],
             description: "test",
-            function: None::<&SectionFunction<HttpApiClient>>,
+           // function: None::<&SectionFunction<HttpApiClient>>,
+             //function: Some(&dns::<HttpApiClient>.into()),
+             //function: Some(&dns::<HttpApiClient>),
+             //function: Some(&(dns::<HttpApiClient> as fn(&'r clap::ArgMatches, &'s ghost::framework::HttpApiClient))),
+             function: Some(&(dns::<HttpApiClient> as fn(&ArgMatches, &HttpApiClient))),
+             //function: Some(dns::<HttpApiClient>),
+            //function: Some(&dns<HttpApiClient>),
+            //function: Some(&dns),
             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
         };
         let delete = &Section::<HttpApiClient> {
@@ -162,7 +169,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
              "list" => list,
          };
          let ghost = &Section::<HttpApiClient> {
-             args: vec![Arg::with_name("ghost").required(true)],
+             // args: vec![Arg::with_name("ghost").required(true)],
+             args: vec![],
              description: "op on the ghost blog platform",
              function: None::<&SectionFunction<HttpApiClient>>,
              subcommands: Some(gsubcommands), 
@@ -372,13 +380,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .setting(AppSettings::ArgRequiredElseHelp);
 
    for (section_name, section) in sections.iter() {
-       println!("section_name{}", section_name);
-       let mut subcommand = SubCommand::with_name(section_name).about(section.description);
+       println!("section_name: {}", section_name);
+      // if (section_name == &"test") {continue;}
+       let mut subcommand = App::new(section_name.to_string()).about(section.description);
        for arg in &section.args {
            subcommand = subcommand.arg(arg);
        }
+       match section.function {
+           Some(f) => println!("have action,level end:{}",section_name), 
+           None => { 
+               println!("no action,have subcommands:{}",section_name);
+               // docmds loop subcommands
+               // println!("subcommands :{:#?}", section.subcommands.as_ref().unwrap());
+               for (section_name, section) in section.subcommands.as_ref().unwrap().iter() {
+                   println!("ghost section_name{}", section_name);
+                   let mut ssubcommand = App::new(section_name.to_owned()).about(section.description);
+                   for arg in &section.args {
+                       ssubcommand = ssubcommand.arg(arg);
+                   }
+                   subcommand = subcommand.subcommand(ssubcommand);
+            
+               }
+
+           },
+       }
        // loop the nest subcommand
        cli = cli.subcommand(subcommand);
+       // first level test have function,no subcomands
+       // first level ghost no function, have subcommands
    }
 
 
@@ -410,6 +439,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Now we have a reference to clone's matches
         println!("Cloning repo: {}", clone_matches.value_of("repo").unwrap());
     }
+    // matches.subcommand_matches independent match, less command, maybe conflict
+    // cloudflare use this for match the 1-level subcommand.
+    //
+    // cloudflare then get email/key/token and create credentials then new api_client 
+    // according the matcheds to loop ,using the function suppiled, but now we use the 
+    // matches.subcommand to precise match and do api by call lib function not using 
+    // the sections function mechnaics
+    //
+    // another using builder pattern?
  //       
  //           // The most common way to handle subcommands is via a combined approach using
  //       // `ArgMatches::subcommand` which returns a tuple of both the name and matches
