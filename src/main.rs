@@ -330,6 +330,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("ghost", Some(ghost_matches)) => {
             // Now we have a reference to ghost's matches
             match ghost_matches.subcommand() {
+                // since so many subcommands ,we can use for loop to reduce code 
+                // ref https://github.com/cloudflare/cloudflare-rs/blob/master/cloudflare-examples/src/main.rs
                 ("post", Some(post_matches)) => {
                     println!("to post posts/pages { }", post_matches.value_of("blog").unwrap());
                     // call lib ghost
@@ -361,10 +363,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 }
                 ("list", Some(list_matches)) => {
-                    // Now we have a reference to list's matches
                     println!("to list posts/pages { }", list_matches.value_of("posts").unwrap());
-                    // call lib ghost
-                    // why need await ,only no use some await
                     let resp = ghost::list().await?;
                     println!("list post {:#?}", resp); //mean
                 }
