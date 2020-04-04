@@ -1,15 +1,10 @@
-//extern crate calp;
 extern crate ghost;
 extern crate clap;
 extern crate tokio;
 
-// use clap::{App, Clap, Arg, AppSettings};
-// use clap::{App, Arg, AppSettings};
 
 #[macro_use]
 extern crate maplit;
-// extern crate clap;
-// extern crate ghost;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 //use ghost::endpoints::{posts, pages, users};
@@ -26,11 +21,7 @@ use std::collections::HashMap;
 
 type SectionFunction<ApiClientType> = fn(&ArgMatches, &ApiClientType);
 
-// as subcommand
-// struct Section<'a, ApiClientType: Box<dyn ApiClient>> {// trait bound
-// struct Section<'a, ApiClientType: ApiClient> {// trait bound
 struct Section<'a, ApiClientType: ApiClient> {// trait bound
-    //args: Vec<Arg<'a, 'a>>,
     args: Vec<Arg<'a>>,
     description: &'a str,
     function: Option<&'a SectionFunction<ApiClientType>>,
@@ -103,53 +94,20 @@ fn mock_api<ApiClientType: ApiClient>(_args: &ArgMatches, _api: &ApiClientType) 
 }
 
 
-// use clap::{App, Clap};
-// 
-// #[derive(Clap)]
-// #[clap(version = "v1.0-beta")]
-// struct Opts;
-// fn main() {
-//     Opts::parse();
-// }
-
-
-
-// extern crate greetings;
-// 
-// fn main() {
-//     greetings::hello();
-// }
-
 #[tokio::main]
-//async fn main() -> Result<(), std::io::Error> {
-// Box any error
-           // function: None,
-            //function: None::<SectionFunction<ApiClientType>>,
-            //subcommands: None::<HashMap<&'a str, &'a Section::<'a, ApiClientType>>>,
-            //subcommands: None::<HashMap<&'a str, &'a Section<'a, ApiClientType>>>,
-            //subcommands: None::<HashMap<&'a str, &'a Section<'a, ApiClient>>>,
-            //subcommands: None,
-// async fn main<'a>() -> Result<(), Box<dyn std::error::Error>> {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let test = &Section::<HttpApiClient> {// traite not type, must impl for 
             args: vec![Arg::with_name("testcase").required(true)],
             description: "test",
-           // function: None::<&SectionFunction<HttpApiClient>>,
-             //function: Some(&dns::<HttpApiClient>.into()),
-             //function: Some(&dns::<HttpApiClient>),
-             //function: Some(&(dns::<HttpApiClient> as fn(&'r clap::ArgMatches, &'s ghost::framework::HttpApiClient))),
-             function: Some(&(dns::<HttpApiClient> as fn(&ArgMatches, &HttpApiClient))),
-             //function: Some(dns::<HttpApiClient>),
-            //function: Some(&dns<HttpApiClient>),
-            //function: Some(&dns),
+            function: Some(&(dns::<HttpApiClient> as fn(&ArgMatches, &HttpApiClient))),
             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
         };
         let delete = &Section::<HttpApiClient> {
              args: vec![Arg::with_name("post").required(true)], 
              description: "delete post",
-            function: None::<&SectionFunction<HttpApiClient>>,
-            subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+             function: None::<&SectionFunction<HttpApiClient>>,
+             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
          };
          let add = &Section::<HttpApiClient> {
              args: vec![Arg::with_name("post").required(true)], 
@@ -176,64 +134,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
              subcommands: Some(gsubcommands), 
          };
     let sections = hashmap! {
-        // "test" => Section::<'a, Box<dyn ApiClient>> {
-        // "test" => &Section::<'a, ApiClient> {
-        // "test" => &Section::<&ApiClient>{
-        // "test" => &Section<ApiClientType: ApiClient> {
-            //function: None::<SectionFunction<ApiClientType: ApiClient>>,
-      //  "test" => &Section::<'a, HttpApiClient> {// traite not type, must impl for 
-      //      args: vec![Arg::with_name("testcase").required(true)],
-      //      description: "test",
-      //      function: None::<&SectionFunction<HttpApiClient>>,
-      //      subcommands: None::<HashMap<&'a str, &'a Section::<'a, HttpApiClient>>>,
-      //  },
-      //
-      // good
-     //   "test" => &Section::<HttpApiClient> {// traite not type, must impl for 
-     //       args: vec![Arg::with_name("testcase").required(true)],
-     //       description: "test",
-     //       function: None::<&SectionFunction<HttpApiClient>>,
-     //       subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
-     //   },
         "test" => test,
         "ghost" => ghost,
- //   
- //       "ghost" => &Section {
- //           args: vec![Arg::with_name("ghost").required(true)],
- //           description: "op on the ghost blog platform",
- //           function: None,
- //           subcommands: Some(hashmap! {
- //               "delete" => &Section {
- //                   args: vec![Arg::with_name("post").required(true)], 
- //                   description: "delete post",
- //                 //  function: delete, 
- //                   function: None,
- //                   subcommands: None,
- //               },
- //               "add" => &Section {
- //                   args: vec![Arg::with_name("post").required(true)], 
- //                   description: "add post",
- //                  // function: add,   
- //                   function: None,
- //                   subcommands: None,
- //               },
- //               "list" => &Section {
- //                   args: vec![Arg::with_name("posts").required(true)], 
- //                   description: "list posts",
- //                   function: None,
- //                   subcommands: None,
- //                   //function: listposts,   
- //               },
- //           }),
- //           // how add subcommands
- //       },
- //       "twitter" => &Section {
- //           args: vec![Arg::with_name("twitter").required(true)],
- //           description: "twitter op",
- //           subcommands: None,
- //           function: None,
- //       },
- //       
     };
 
     // *NOTE:* You can actually achieve the best of both worlds by using Arg::from() (instead of Arg::with_name())
@@ -415,30 +317,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let matches = cli.get_matches();
 
-    // You can check the value provided by positional arguments, or option arguments
-    if let Some(o) = matches.value_of("output") {
-        println!("Value for output: {}", o);
-    }
-    if matches.is_present("ghost") {
-        println!("'sharecli ghost' was run.");
-    }
-
-    // You can see which subcommand was used
-    if let Some(subcommand) = matches.subcommand_name() {
-        println!("'sharecli {}' was used", subcommand);
-
-        // It's important to note, this *only* check's git's DIRECT children, **NOT** it's
-        // grandchildren, great grandchildren, etc.
-        //
-        // i.e. if the command `git push remove --stuff foo` was run, the above will only print out,
-        // `git push` was used. We'd need to get push's matches to see futher into the tree
-    }
-
-    // You could get the independent subcommand  matches, including children , although this is less common
-    if let Some(clone_matches) = matches.subcommand_matches("clone") {
-        // Now we have a reference to clone's matches
-        println!("Cloning repo: {}", clone_matches.value_of("repo").unwrap());
-    }
     // matches.subcommand_matches independent match, less command, maybe conflict
     // cloudflare use this for match the 1-level subcommand.
     //
@@ -448,42 +326,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // the sections function mechnaics
     //
     // another using builder pattern?
- //       
- //           // The most common way to handle subcommands is via a combined approach using
- //       // `ArgMatches::subcommand` which returns a tuple of both the name and matches
- //       match matches.subcommand() {
- //           ("clone", Some(clone_matches)) => {
- //               // Now we have a reference to clone's matches
- //               println!("Cloning {}", clone_matches.value_of("repo").unwrap());
- //           }
- //           ("push", Some(push_matches)) => {
- //               // Now we have a reference to push's matches
- //               match push_matches.subcommand() {
- //                   ("remote", Some(remote_matches)) => {
- //                       // Now we have a reference to remote's matches
- //                       println!("Pushing to {}", remote_matches.value_of("repo").unwrap());
- //                   }
- //                   ("local", Some(_)) => {
- //                       println!("'git push local' was used");
- //                   }
- //                   _ => unreachable!(),
- //               }
- //           }
- //           ("add", Some(add_matches)) => {
- //               // Now we have a reference to add's matches
- //               println!(
- //                   "Adding {}",
- //                   add_matches
- //                       .values_of("stuff")
- //                       .unwrap()
- //                       .collect::<Vec<_>>()
- //                       .join(", ")
- //               );
- //           }
- //           ("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
- //           _ => unreachable!(), // If all subcommands are defined above, anything else is unreachabe!()
- //       }
- //       // my ghost
     match matches.subcommand() {
         ("ghost", Some(ghost_matches)) => {
             // Now we have a reference to ghost's matches
@@ -526,10 +368,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let resp = ghost::list().await?;
                     println!("list post {:#?}", resp); //mean
                 }
+                ("", None) => println!("No ghost subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
                 _ => unreachable!(),
             }
         }
-        ("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
+        ("", None) => println!("No main subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachabe!()
     }
 
