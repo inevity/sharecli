@@ -1,12 +1,18 @@
 extern crate ghost;
 extern crate clap;
 extern crate tokio;
+//extern crate tuple;
+//use tuple::*;
+//use std::convert::TryInto;
+//use std::convert::TryFrom;
+
+
 
 
 #[macro_use]
 extern crate maplit;
 
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use clap::{App, AppSettings, Arg, ArgSettings, ArgMatches, SubCommand};
 //use ghost::endpoints::{posts, pages, users};
 use ghost::endpoints::{dns};
 use ghost::framework::{
@@ -18,6 +24,7 @@ use ghost::framework::{
 };
 use serde::Serialize;
 use std::collections::HashMap;
+
 
 type SectionFunction<ApiClientType> = fn(&ArgMatches, &ApiClientType);
 
@@ -116,7 +123,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
              subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
          };
          let list = &Section::<HttpApiClient> {
-             args: vec![Arg::with_name("posts").required(true)], 
+             args: vec![Arg::with_name("posts").required(true), 
+                        //Arg::with_name("query").short('q').long("query").value_name("querystring").help("set list query args").takes_value(true)
+                        Arg::with_name("query").short('q').long("query").value_delimiter("&").value_name("querystring").help("set list query args").takes_value(true)
+                        //Arg::with_name("query").short('q').long("query").setting(ArgSettings::UseValueDelimiter).value_name("querystring").help("set list query args").takes_value(true)
+                        //Arg::with_name("query").short('q').long("query").multiple(true).use_delimiter(true).value_delimiter("&").setting(ArgSettings::TakesValue).help("set list query args")
+                        ], 
              description: "list posts",
              function: None::<&SectionFunction<HttpApiClient>>,
              subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
@@ -337,7 +349,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // call lib ghost
                     // why need await ,only no use some await
                     let resp = ghost::post().await?;
-                    println!("list post {:#?}", resp); //mean
+                    println!("post blog {:#?}", resp); //mean
                 }
 
                 ("delete", Some(delete_matches)) => {
@@ -363,9 +375,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 }
                 ("list", Some(list_matches)) => {
+
                     println!("to list posts/pages { }", list_matches.value_of("posts").unwrap());
-                    let resp = ghost::list().await?;
-                    println!("list post {:#?}", resp); //mean
+                   // if let Some(q) = list_matches.values_of("query") {
+                    //if let Some(q) = matches.value_of("query") {
+                        // why string
+                    // if let Some(q) = list_matches.values_of("query").unwrap().collect::<Vec<_>>() {
+                        type Query1 = (String, String);
+                        type Query2 = (String,);
+                        let mut q1: Vec<Query1> = Vec::new();
+                        let mut q2: Vec<Query2> = Vec::new();
+                    if let Some(q) = list_matches.values_of("query") {
+                        // let v = q.unwrap().collect::<Vec<_>>() ;
+                        let v = q.collect::<Vec<_>>() ;
+                        
+                        //q = ();
+                        //
+
+                        for arg in &v {
+                            if arg.contains("=") == true {
+                                // for token in arg.split("=") {
+                                //    println!(":token {}", token);
+                                // }
+                                let mut iter = arg.split("=");
+                                let tuple : Query1 = (iter.next().unwrap().to_string(), iter.next().unwrap().to_string());
+                                q1.push(tuple);
+                                continue;
+
+                            }
+                            let tuple: Query2 = (arg.to_string(),);
+                            q2.push(tuple);
+                        }
+                     //   for arg in &v {
+                     //       let tokens:Vec<&str>= arg.split(":").collect();
+                     //      // let a: [&str; 2] = tokens.try_into()?;
+                     //       //let a: [&str; 2] = tokens.into()?;
+                     //      // let slice = &tokens[..2];
+                     //      // let mut a = [&str; 2];
+                     //      // a.copy_from_slice(slice);
+                     //       //let t: T2<_,_> = tokens.into();
+                     //       // let t: T2<_,_> = a.into();
+                     //       //println!("tokens:{:#?}", tokens.into());
+                     //       //println!("tokens:{:#?}", t);
+
+                     //   }
+
+                         
+                        //println!("list post query {:#?}", query); //mean
+                        println!("list post query {:#?}", q1); //mean
+                        println!("list post query {:#?}", q2); //mean
+                        
+                    }
+                        let resp = ghost::list(q1, q2).await?;
+                        println!("list post {:#?}", resp); //mean
                 }
                 ("", None) => println!("No ghost subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
                 _ => unreachable!(),

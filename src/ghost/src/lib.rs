@@ -73,12 +73,15 @@ struct Post {
 #[derive(Debug, Deserialize)]
 struct Postl {
     slug: String,
+    id: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct Data {
     posts: Vec<Postl>,
 }
+type Query1 = (String, String);
+type Query2 = (String,);
 
 mod jwt_numeric_date {
     //! Custom serialization of DateTime<Utc> to conform with the JWT spec (RFC 7519 section 2, "Numeric Date")
@@ -161,71 +164,25 @@ pub async fn delete() -> Result<HashMap<String, String>, Box<dyn std::error::Err
     Ok(resp)
 }
 //pub async fn list() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
-pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
-    //let key = makereq();
-    println!("key: {:?}", format!("Ghost {:?}", rawkey));
-    println!("key: {:?}", format!("Ghost {}", rawkey));
-    //let key = format!("Ghost {:?}", rawkey);
     let key = format!("Ghost {}", rawkey);
+    println!("query stirng{:?} {:?}",q1, q2 );
     
     println!("key is : {}",key);
-  //  let mut  headers = reqwest::header::HeaderMap::new();
-   // headers.insert(Authorization, ("Ghost " + key).parse().unwrap());
-  //  headers.insert(Content-Type, "applicatin/json".parse().unwrap());
-   // assert!(headers.contains_key(Authoriaztion));
-
-    // let resp = reqwest::Client::new().get("http://localhost:2368/ghost/api/v3/admin/posts")
-  //  let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/api/v3/admin/posts")
-  //      //.headers(headers)
-  //      .header("Authorization", format!("Ghost {:?}", key))
-  //      .send()
-  //      .await?
-  //      .json::<HashMap<String, String>>()
-  //      .await?;
-    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/api/v3/admin/posts")
-    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/api/posts")
-    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts/?format=html")
- //   #[derive(Deserialize)]
- //   struct Posts {
- //       origin: String,
- //   }
-    //let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts/?type=published")
-   // let resp = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts")
-   // ablove use the normal url,no admin domain,and use https
     let resp = reqwest::Client::new().get("https://blog.approachai.com/ghost/api/v3/admin/posts")
-    
-        //.header("Authorization", format!("Ghost {:?}", key.as_str()))
-       // .header("Authorization", format!("Ghost {:?}", key.as_str()))
         .header("Authorization", key.as_str())
-        //.header("Authorization", key)
         .header("Content-Type", "application/json")
-        .query(&[("fields","title,url,id,slug,status"),("limit","500"),("page", "1"),("status","draft")])
+       // .query(&[("fields","title,url,id,slug,status"),("limit","500"),("page", "1"),("status","draft")])
+        .query(&q1)
+        .query(&q2)
         // tags some empty then panic
         .send()
         .await?
-        //.json()
         .text()
         .await?;
 
-   // let resp : Posts = reqwest::Client::new().get("http://blog.approachai.com/ghost/admin/posts")
-   //     .header("Authorization", format!("Ghost {:?}", key))
-   //     .send()
-   //     .await?
-   //     //.json()?;
-   //     .json()
-   //     .await?;    
-    
-    // println!("{}", resp); //mean is result enum
-  //  println!("list resp in lib ghost {:#?}", resp); //mean is result enum
-  //  println!("list resp in lib ghost end:#?"); //mean is result enum
-  //  println!("list resp in lib ghost {:?}", resp); //mean is result enum
-  //  println!("list resp in lib ghost end:?"); //mean is result enum
-
-    // now comments this 
- //   println!("list resp in lib ghost {}", resp); //mean is result enum
-  //  println!("list resp in lib ghost end"); //mean is result enum
-    println!("slug {:#?}", serde_json::from_str::<Value>(&resp));
+    // println!("slug {:#?}", serde_json::from_str::<Value>(&resp));
     let v: Value = serde_json::from_str(&resp)?;
     println!("posts meta: {}", v["meta"]);
     //println!("slug {}", v["posts"][0]["slug"]);
@@ -239,9 +196,8 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
     //}
     let data: Data = serde_json::from_str(&resp).unwrap();
     for post in data.posts {
-       println!("slug: {}", post.slug);
+       println!("slug: {}, id: {}", post.slug, post.id);
     }
-  //  println!("meta: {}", data.metata);
 
 
     // have json value remine why
