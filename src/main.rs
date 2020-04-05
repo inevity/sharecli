@@ -112,7 +112,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
         let delete = &Section::<HttpApiClient> {
              args: vec![Arg::with_name("post").required(true),
-                        Arg::with_name("postid").short('i').long("id").help("need post id").takes_value(true)
+                        Arg::with_name("postid").short('i').long("id").value_delimiter(",").help("need post id").takes_value(true)
                        ], 
              description: "delete post",
              function: None::<&SectionFunction<HttpApiClient>>,
@@ -356,46 +356,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 ("delete", Some(delete_matches)) => {
                     // Now we have a reference to delete's matches
-                    println!("this post url {} will be deleted", delete_matches.value_of("post").unwrap());
-                    // call lib ghost
-                   // let resp = ghost::delete().await();
-                    // let resp: std::collections::HashMap<std::string::String, std::string::String> = ghost::delete().await?;
-                   if let Some(id) = delete_matches.value_of("postid") {
-                    let resp = ghost::delete(id.to_string()).await?;
-                    //let resp: u32 = ghost::delete().await?;
-                    println!("{:#?}", resp); //mean
-
-                  // no need all below becaseu we have use the ? and last OK(()) to return result.
-                  //  let resp = match resp {
-                  //      Ok(res) => {
-                  //          println!("resp in match: {}", res);
-                  //      },
-                  //      Err(error) => {
-                  //          panic!("Problem deleting post : {:?}", error)
-                  //      },
-                  //  };
-                    //Ok(()) // why cannot add this 
+                    if let Some(id) = delete_matches.values_of("postid") {
+                       for var in id {
+                           println!("idd{}", var);
+                           let resp = ghost::delete(var.to_string()).await?;
+                       }
                   }
 
                 }
                 ("list", Some(list_matches)) => {
 
                     println!("to list posts/pages { }", list_matches.value_of("posts").unwrap());
-                   // if let Some(q) = list_matches.values_of("query") {
-                    //if let Some(q) = matches.value_of("query") {
-                        // why string
-                    // if let Some(q) = list_matches.values_of("query").unwrap().collect::<Vec<_>>() {
-                        type Query1 = (String, String);
-                        type Query2 = (String,);
-                        let mut q1: Vec<Query1> = Vec::new();
-                        let mut q2: Vec<Query2> = Vec::new();
+                    type Query1 = (String, String);
+                    type Query2 = (String,);
+                    let mut q1: Vec<Query1> = Vec::new();
+                    let mut q2: Vec<Query2> = Vec::new();
                     if let Some(q) = list_matches.values_of("query") {
-                        // let v = q.unwrap().collect::<Vec<_>>() ;
                         let v = q.collect::<Vec<_>>() ;
-                        
-                        //q = ();
-                        //
-
                         for arg in &v {
                             if arg.contains("=") == true {
                                 // for token in arg.split("=") {
