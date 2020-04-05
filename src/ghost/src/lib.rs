@@ -178,8 +178,19 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
     }
 
 
-    //let v = serde_json::from_str(resp.as_ref())?;
-    let v: Value = serde_json::from_str(resp.as_ref()).unwrap();
+    //must annotaon type
+    let v: Value = serde_json::from_str(resp.as_ref())?;
+   // Result<T>, can not use ?
+   //  println!("error{:?}", serde_json::from_str(resp.as_ref())?);
+        //Ok(_) => Ok(()),
+ //   match serde_json::from_str::<Value>(resp.as_ref()) {
+ //       Ok(_) => println!("ok"),
+ //       Err(e) => {
+ //           println!("errrs{}", e);
+ //       },
+ //   }
+           // return Box::new(e);
+   // let v: Value = serde_json::from_str(resp.as_ref()).unwrap();
     Ok(())
 }
 pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
