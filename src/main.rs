@@ -1,3 +1,7 @@
+///  usage help:
+///  sharecli ghost list post -q 'fields=title,url,id,slug,status&limit=all&status=draft&page=2'|grep test
+///  sharecli ghost delete post --id 5e73458d4cea2827f8cf4b96,5e7344774cea2827f8cf4b92
+///  sharecli ghost delete post --id 5e7343c64cea2827f8cf4b8e,5e7343654cea2827f8cf4b8a,5e73430b4cea2827f8cf4b86,5e7341644cea2827f8cf4b7e
 extern crate ghost;
 extern crate clap;
 extern crate tokio;
