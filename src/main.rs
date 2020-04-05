@@ -111,7 +111,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
         };
         let delete = &Section::<HttpApiClient> {
-             args: vec![Arg::with_name("post").required(true)], 
+             args: vec![Arg::with_name("post").required(true),
+                        Arg::with_name("postid").short('i').long("id").help("need post id").takes_value(true)
+                       ], 
              description: "delete post",
              function: None::<&SectionFunction<HttpApiClient>>,
              subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
@@ -358,7 +360,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // call lib ghost
                    // let resp = ghost::delete().await();
                     // let resp: std::collections::HashMap<std::string::String, std::string::String> = ghost::delete().await?;
-                    let resp = ghost::delete().await?;
+                   if let Some(id) = delete_matches.value_of("postid") {
+                    let resp = ghost::delete(id.to_string()).await?;
                     //let resp: u32 = ghost::delete().await?;
                     println!("{:#?}", resp); //mean
 
@@ -372,6 +375,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                   //      },
                   //  };
                     //Ok(()) // why cannot add this 
+                  }
 
                 }
                 ("list", Some(list_matches)) => {

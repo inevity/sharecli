@@ -154,14 +154,26 @@ mod jwt_numeric_date {
 
 // #[tokio::main]
 //pub async fn delete() -> Result<(), Box<dyn std::error::Error>> {
-pub async fn delete() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
-    let resp = reqwest::get("https://httpbin.org/ip")
-        .await?
-        .json::<HashMap<String, String>>()
+//pub async fn delete(id: String) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
+pub async fn delete(id: String) -> Result<(), Box<dyn std::error::Error>> {
+//    let resp = reqwest::get("https://httpbin.org/ip")
+//        .await?
+//        .json::<HashMap<String, String>>()
+//        .await?;
+//    //println!("{:#?}", resp); //mean is result enum
+//    //Ok(())
+//    Ok(resp)
+    let rawkey = makereq().unwrap();
+    let key = format!("Ghost {}", rawkey);
+    let resp = reqwest::Client::new().request(reqwest::Method::DELETE, format!("https://blog.approachai.com/ghost/api/v3/admin/posts/{}/",id).as_str())
+        .header("Authorization", key.as_str())
+        .header("Content-Type", "application/json")
+        .send()
         .await?;
-    //println!("{:#?}", resp); //mean is result enum
-    //Ok(())
-    Ok(resp)
+    println!("delete resp status {}", resp.status());
+
+    Ok(())
+      
 }
 //pub async fn list() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
 pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::error::Error>> {
