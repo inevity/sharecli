@@ -31,19 +31,6 @@ extern crate url;
 pub mod endpoints;
 pub mod framework;
 
-//#macro_use] extern crate serde_json;
-//use frank_jwt::{Algorithm, encode, decode};
-//use frank_jwt::{Algorithm, encode, decode};
-
-
-//#[derive(Debug, Serialize, Deserialize)]
-//struct Claims {
-//    #[serde(with = "jwt_numeric_date")]
-//    iat: DateTime<Utc>,
-//    #[serde(with = "jwt_numeric_date")]
-//    exp: DateTime<Utc>,
-//    aud: String,
-//}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claim {
@@ -152,7 +139,6 @@ mod jwt_numeric_date {
 
 
 
-//pub async fn delete(id: String) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
 pub async fn delete(id: String) -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
@@ -166,7 +152,6 @@ pub async fn delete(id: String) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
       
 }
-//pub async fn list() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
 pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
@@ -176,7 +161,6 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
     let resp = reqwest::Client::new().get("https://blog.approachai.com/ghost/api/v3/admin/posts")
         .header("Authorization", key.as_str())
         .header("Content-Type", "application/json")
-       // .query(&[("fields","title,url,id,slug,status"),("limit","500"),("page", "1"),("status","draft")])
         .query(&q1)
         .query(&q2)
         // tags some empty then panic
@@ -185,55 +169,22 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
         .text()
         .await?;
 
-    // println!("slug {:#?}", serde_json::from_str::<Value>(&resp));
     let v: Value = serde_json::from_str(&resp)?;
     println!("posts meta: {}", v["meta"]);
-    //println!("slug {}", v["posts"][0]["slug"]);
-    //let v["posts"] = ();
     println!("is{}", v["posts"].is_array());
-    //for slug in v["posts"].as_array().iter() {
-    //for slug in v["posts"].into_iter() {
-    //for slug in v["posts"] {
-    //   println!("slug: {}", slug["slug"]);
-    //
-    //}
-    let data: Data = serde_json::from_str(&resp).unwrap();
+    let data: Data = serde_json::from_str(&resp)?;
     for post in data.posts {
        println!("slug: {}, id: {}", post.slug, post.id);
     }
 
 
-    // have json value remine why
-    //println!("slug {:#?}", serde_json::from_str::<Value>(&resp).unwrap().to_string());
-
-   // println!("list resp {:#?}", resp.json()); //mean is result enum
-    //let v: Value = serde_json::from_str(resp).unwrap()?;
-    //let v = serde_json::from_str(resp.as_ref()).unwrap()?;
     let v = serde_json::from_str(resp.as_ref())?;
-   // println!("list resp {}", v);                                    
     Ok(())
-    //Ok(resp)
-    //Ok(resp)
 }
 pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
-   // println!("Author: {}", key);
-    //let () = key; String
     
-//    println!("key is : {}",key);
-//    let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
-//        .header("Authorization", key.as_str())
-//        //.header("Authorization", key)
-//        .header("Content-Type", "application/json")
-//        .body("{"posts":[{"title":"Hello world"}]}")
-//        .send()
-//        .await?
-//        //.json()
-//        .text()
-//        .await?;
-//
-//    println!("post resp {:#?}", resp); //mean is result enum
   let post_body = json!({
                          "posts": [
                                      { 
@@ -242,17 +193,6 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
                                  ],   
                        });
 
-   // let mut map = HashMap::new();
-   // map.insert("title", "test title");
-    //then json(&map);
-//   let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts")
-//       .header("Authorization", key.as_str())
-//       .header("Content-Type", "application/json")
-//       //.body("{"posts":[{"title":"Hello world"}]}")
-//       .json(&post_body)
-//       //.body("aa")
-//       .send() //resposne
-//       .await?;
 
 
    let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts/")
@@ -263,21 +203,11 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
        .send() //resposne
        .await?
        .text()
-       //.json()
        .await?;
 
        
-   // println!("post resp is :  {:#?}", resp);
     let v: Value = serde_json::from_str(&resp)?;
     println!("post resp json iss : {:#?} ", v);
-    // invalid type: map, expected a string
-    // println!("post resp json is :  {:?}", serde_json::from_str(&resp)?);
-
-//for resopne print 
-//    match resp.status() {
-//        reqwest::StatusCode::OK => println!("success"),
-//        s => println!("status: {:?}",s),
-//     };
 
     Ok(())
 }
@@ -296,31 +226,12 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
     let id = v[0];
 
     let secrethex = v[1];
-   // println!("id {}, secret {:?}", id, secrethex); 
     let secret = hex::decode(secrethex.to_owned())?;
 
 
 
     let mut header = Header::default();
-    //header.kid = Some("signing_key".to_owned());
     header.kid = Some(id.to_owned());
-    //header.kid = Some(id.to_string());
-     // println!("{}",header);
-    // println!("{:#?}",header);
-     //() = id; //&str
-     //() = id.to_owned(); //String
-//    header.alg = Algorithm::HS256;
- //   header.typ = "JWT".to_owned();
-
- //   let iat = Utc::now();
- //   //let exp = iat + chrono::Duration::days(1);
- //   // let exp = iat + 5 * 60;
- //   let exp = iat + chrono::Duration::minutes(5);
-
- //   let aud = "/v3/admin/".to_string();
- //   let my_claims =
- //       //Claims { iat, exp, aud: "/v3/admin".to_owned() };
- //       Claims { iat, exp, aud: aud.clone() };
     let iat = Utc::now().timestamp();
     let exp = iat + 300;
 
@@ -328,64 +239,13 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
     let my_claims =
         Claim { iat: iat, exp: exp, aud: "/v3/admin/".to_owned(), };
 
-//    println!("my_claims: {:#?}", my_claims);
     let j = serde_json::to_string(&my_claims)?;
-//    println!("my_claims to_string {}", j);
-////  to test weather encode same as the bash script ----
-// and in src/jsonwebtoken/src/serialization.rs to simulat the json as bash
-//    let data = r#"
-//    { "iat": 1584504692,
-//      "exp": 1584504992,
-//      "aud": "/v3/admin/"
-//    }"#;
-//    let my_claims : Claim = serde_json::from_str(data)?;
-//    println!("my_claims from str : {:#?}", my_claims);
-//  to test weather encode same as the bash script ----
 
     
-//    //as_bytes() or b''
-//    // HS256 mean HMAC,not base64.
-//    // from_secret(&[u8])
-//    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(secret)) {
-//    //let token = match encode(&header, &my_claims, &EncodingKey::from_secret(&secret.as_bytes())) {
-//    //base64sectet.
-// we use hex decode!!!
-     // let token1 = match encode(&header, &my_claims, &EncodingKey::from_secret(secret.as_bytes())) {
-     // for hex stirng to decode
      let token1 = match encode(&header, &my_claims, &EncodingKey::from_secret(&secret)) {
-    //let token1 = match encode(&header, &my_claims, &EncodingKey::from_base64_secret(secret.as_ref()).unwrap()) {
         Ok(t) => t,
         Err(_) => panic!(), // in practice you would return the error
     };
-    // since the sign process have change ,the validation have defect
-     //       let decoded = decode::<Claim>(
-     //           &token1,
-     //           &DecodingKey::from_secret(secret.as_ref()),
-     //           //&Validation::default(),
-     //           &Validation::new(Algorithm::HS256),
-     //       )
-     //       .expect("Failed to decode token");
-
-     //       //assert_eq!(decoded.claims, my_claims);
-
-     //       println!("decoded {:#?}", decoded);
-
-    //println!("jwt1 token : {:#?}", token1);
-//  prank_jwt test-------    
-//  //cannot keep order why
-//   let mut header2 = json!({
-//                "alg": "HS256",
-//                "typ": "JWT",
-//                //"kid": id.as_str(),
-//                "kid": id,
-//   });
-//   println!("jwt2 header2: {:#?}", header2);
-//   let mut payload = json!({
-//       "aud": aud.clone(),
-//       "exp": exp,
-//       "iat": iat,
-//   });
-//   println!("jwt2 payload: {:#?}", payload);
     let rpayload =
         Fclaim { iat: iat, exp: exp, aud: "/v3/admin/".to_owned(), };
     let rheader2 =
@@ -396,20 +256,11 @@ fn makereq() -> Result<String, Box<dyn std::error::Error>> {
     let header2 : Value  = serde_json::from_str(&header2s)?; 
 
 
-   //let token2 =  frank_jwt::encode(header2, &secret.to_owned(), &payload, frank_jwt::Algorithm::HS256).unwrap();
-     // for hex stirng to decode
-   //let token2 =  frank_jwt::encode(header2, &secret.to_string(), &payload, frank_jwt::Algorithm::HS256).unwrap();
    let token2 =  frank_jwt::encode(header2, &secret, &payload, frank_jwt::Algorithm::HS256).unwrap();
-  // println!("jwt2 token : {:#?}", token2);
-  // let (header, payload) = frank_jwt::decode(&token2, &secret, frank_jwt::Algorithm::HS256, &ValidationOptions::default());
    let decoded2 = frank_jwt::decode(&token2, &secret, frank_jwt::Algorithm::HS256, &frank_jwt::ValidationOptions::default());
    let decoded3 = frank_jwt::validate_signature(&token2, &secret, frank_jwt::Algorithm::HS256)?;
-   //println!("decoded2 {:#?}", decoded2);
-   //println!("decoded3 {:#?}", decoded3); //true
-
 
     Ok(token1)
-    //Ok(token2)
 
 }
 
