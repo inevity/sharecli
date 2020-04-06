@@ -1,14 +1,9 @@
 mod api;
-// extern crate chrono
 use std::collections::HashMap;
 
-//use chrono::prelude::*;
 
 use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-//use serde_json::{Result, Value};
-// #[macro_use]
-//extern crate serde_json;
 use serde_json::json;
 use serde_json::{Value, Error};
 
@@ -20,8 +15,6 @@ use std::env;
 
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-//extern crate hex;
-//use hex as Hex;
 extern crate frank_jwt;
 
 
@@ -159,9 +152,7 @@ pub async fn delete(id: String) -> Result<(), Box<dyn std::error::Error>> {
 pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
-    println!("query stirng{:?} {:?}",q1, q2 );
     
-    println!("key is : {}",key);
     let resp = reqwest::Client::new().get("https://blog.approachai.com/ghost/api/v3/admin/posts")
         .header("Authorization", key.as_str())
         .header("Content-Type", "application/json")
@@ -174,8 +165,6 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
         .await?;
 
     let v: Value = serde_json::from_str(&resp)?;
-    println!("posts meta: {}", v["meta"]);
-    println!("is{}", v["posts"].is_array());
     let data: Data = serde_json::from_str(&resp)?;
     for post in data.posts {
        println!("slug: {}, id: {}", post.slug, post.id);
@@ -184,48 +173,35 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
 
     //must annotaon type
     let v: Value = serde_json::from_str(resp.as_ref())?;
-   // Result<T>, can not use ?
-   //  println!("error{:?}", serde_json::from_str(resp.as_ref())?);
-        //Ok(_) => Ok(()),
- //   match serde_json::from_str::<Value>(resp.as_ref()) {
- //       Ok(_) => println!("ok"),
- //       Err(e) => {
- //           println!("errrs{}", e);
- //       },
- //   }
-           // return Box::new(e);
-   // let v: Value = serde_json::from_str(resp.as_ref()).unwrap();
     Ok(())
 }
 pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
     
-  let post_body = json!({
+    let post_body = json!({
                          "posts": [
                                      { 
                                        "title": "test hatitel"
                                      }  
                                  ],   
                        });
+  
+    let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts/")
+        .header("Authorization", key.as_str())
+        .header("Content-Type", "application/json")
+        //.body("{"posts":[{"title":"Hello world"}]}")
+        .json(&post_body)
+        .send() //resposne
+        .await?
+        .text()
+        .await?;
 
+        
+     let v: Value = serde_json::from_str(&resp)?;
+     println!("post resp json iss : {:#?} ", v);
 
-
-   let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts/")
-       .header("Authorization", key.as_str())
-       .header("Content-Type", "application/json")
-       //.body("{"posts":[{"title":"Hello world"}]}")
-       .json(&post_body)
-       .send() //resposne
-       .await?
-       .text()
-       .await?;
-
-       
-    let v: Value = serde_json::from_str(&resp)?;
-    println!("post resp json iss : {:#?} ", v);
-
-    Ok(())
+     Ok(())
 }
 
 #[cfg(test)]
@@ -236,12 +212,8 @@ mod tests {
     }
 }
 fn makereq() -> Result<String, Box<dyn std::error::Error>> {
-   // let apikey = "***REMOVED***"; 
     dotenv().ok();
-  //  for (key, value) in env::vars() {
-  //  }
     let apikey = env::var("API_KEY").unwrap();
-   // let apikey: &str = &env::var("API_KEY").unwrap().as_str();
     let v: Vec<&str> = apikey.split(':').collect();
 
     let id = v[0];

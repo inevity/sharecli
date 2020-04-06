@@ -130,10 +130,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
          };
          let list = &Section::<HttpApiClient> {
              args: vec![Arg::with_name("posts").required(true), 
-                        //Arg::with_name("query").short('q').long("query").value_name("querystring").help("set list query args").takes_value(true)
                         Arg::with_name("query").short('q').long("query").value_delimiter("&").value_name("querystring").help("set list query args").takes_value(true)
-                        //Arg::with_name("query").short('q').long("query").setting(ArgSettings::UseValueDelimiter).value_name("querystring").help("set list query args").takes_value(true)
-                        //Arg::with_name("query").short('q').long("query").multiple(true).use_delimiter(true).value_delimiter("&").setting(ArgSettings::TakesValue).help("set list query args")
                         ], 
              description: "list posts",
              function: None::<&SectionFunction<HttpApiClient>>,
@@ -183,20 +180,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .setting(AppSettings::ArgRequiredElseHelp);
 
    for (section_name, section) in sections.iter() {
-       println!("section_name: {}", section_name);
-      // if (section_name == &"test") {continue;}
        let mut subcommand = App::new(section_name.to_string()).about(section.description);
        for arg in &section.args {
            subcommand = subcommand.arg(arg);
        }
        match section.function {
-           Some(f) => println!("have action,level end:{}",section_name), 
+           // Some(f) => println!("have action,level end:{}",section_name), 
+           Some(f) => (), //or {},
            None => { 
-               println!("no action,have subcommands:{}",section_name);
-               // docmds loop subcommands
-               // println!("subcommands :{:#?}", section.subcommands.as_ref().unwrap());
                for (section_name, section) in section.subcommands.as_ref().unwrap().iter() {
-                   println!("ghost section_name{}", section_name);
                    let mut ssubcommand = App::new(section_name.to_owned()).about(section.description);
                    for arg in &section.args {
                        ssubcommand = ssubcommand.arg(arg);
@@ -253,7 +245,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 ("list", Some(list_matches)) => {
 
-                    println!("to list posts/pages { }", list_matches.value_of("posts").unwrap());
                     type Query1 = (String, String);
                     type Query2 = (String,);
                     let mut q1: Vec<Query1> = Vec::new();
@@ -262,9 +253,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let v = q.collect::<Vec<_>>() ;
                         for arg in &v {
                             if arg.contains("=") == true {
-                                // for token in arg.split("=") {
-                                //    println!(":token {}", token);
-                                // }
                                 let mut iter = arg.split("=");
                                 let tuple : Query1 = (iter.next().unwrap().to_string(), iter.next().unwrap().to_string());
                                 q1.push(tuple);
@@ -287,15 +275,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                      //       //println!("tokens:{:#?}", t);
 
                      //   }
-
-                         
-                        //println!("list post query {:#?}", query); //mean
-                        println!("list post query {:#?}", q1); //mean
-                        println!("list post query {:#?}", q2); //mean
                         
                     }
                         let resp = ghost::list(q1, q2).await?;
-                        // println!("list post {:#?}", resp); //mean
                 }
                 ("", None) => println!("No ghost subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
                 _ => unreachable!(),
@@ -308,7 +290,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // You can see how many times a particular flag or argument occurred
     // Note, only flags can have multiple occurrences
-    match matches.occurrences_of("debug") {
+    match matches.occurrences_of("debuggg") {
         0 => println!("Debug mode is off"),
         1 => println!("Debug mode is kind of on"),
         2 => println!("Debug mode is on"),
@@ -329,7 +311,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
 
-    println!("will end main ...");
     // Continued program logic goes here...
     Ok(())
 }
