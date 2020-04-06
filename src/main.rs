@@ -184,10 +184,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
        for arg in &section.args {
            subcommand = subcommand.arg(arg);
        }
-       match section.function {
-           // Some(f) => println!("have action,level end:{}",section_name), 
-           Some(f) => (), //or {},
-           None => { 
+   //    match section.function {
+   //        // Some(f) => println!("have action,level end:{}",section_name), 
+   //        Some(f) => (), //or {},
+   //        None => { 
+   //            for (section_name, section) in section.subcommands.as_ref().unwrap().iter() {
+   //                let mut ssubcommand = App::new(section_name.to_owned()).about(section.description);
+   //                for arg in &section.args {
+   //                    ssubcommand = ssubcommand.arg(arg);
+   //                }
+   //                subcommand = subcommand.subcommand(ssubcommand);
+   //         
+   //            }
+
+   //        },
+   //    }
+       if let None = section.function {
+       //if section.function.is_none() {
+      // if section.function.is_none() {
+       // if section.function.unwrap_or() {  
                for (section_name, section) in section.subcommands.as_ref().unwrap().iter() {
                    let mut ssubcommand = App::new(section_name.to_owned()).about(section.description);
                    for arg in &section.args {
@@ -197,8 +212,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
                }
 
-           },
        }
+
+    //   need return pass??
+    //    section.function.unwrap_or_else(|| -> &App 
+    //    {
+    //           for (section_name, section) in section.subcommands.as_ref().unwrap().iter() {
+    //               let mut ssubcommand = App::new(section_name.to_owned()).about(section.description);
+    //               for arg in &section.args {
+    //                   ssubcommand = ssubcommand.arg(arg);
+    //               }
+    //               subcommand = subcommand.subcommand(ssubcommand);
+
+    //        
+    //           }
+    //           //&subcommand
+    //    }  
+
+    //   ); 
        // loop the nest subcommand
        cli = cli.subcommand(subcommand);
        // first level test have function,no subcomands
