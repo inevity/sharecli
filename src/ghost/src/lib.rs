@@ -12,6 +12,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::{Value, Error};
 
+extern crate dotenv;
+
+use dotenv::dotenv;
+use std::env;
 
 
 use jsonwebtoken::errors::ErrorKind;
@@ -232,7 +236,12 @@ mod tests {
     }
 }
 fn makereq() -> Result<String, Box<dyn std::error::Error>> {
-    let apikey = "***REMOVED***"; 
+   // let apikey = "***REMOVED***"; 
+    dotenv().ok();
+  //  for (key, value) in env::vars() {
+  //  }
+    let apikey = env::var("API_KEY").unwrap();
+   // let apikey: &str = &env::var("API_KEY").unwrap().as_str();
     let v: Vec<&str> = apikey.split(':').collect();
 
     let id = v[0];

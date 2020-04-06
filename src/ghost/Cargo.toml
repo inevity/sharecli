@@ -34,3 +34,4 @@ url = "2.1"
 percent-encoding = "1.0.1"
 failure = "0.1.5"
 
+dotenv = "0.15.0"
