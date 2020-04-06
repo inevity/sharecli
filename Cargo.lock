@@ -160,7 +160,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80094f509cf8b5ae86a4966a39b3ff66cd7e2a3e594accec3743ff3fabeab5b2"
 dependencies = [
  "num-integer",
- "num-traits 0.2.11",
+ "num-traits",
  "serde",
  "time",
 ]
@@ -279,6 +279,12 @@ dependencies = [
  "redox_users",
  "winapi 0.3.8",
 ]
+
+[[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "dtoa"
@@ -437,6 +443,7 @@ name = "ghost"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dotenv",
  "failure",
  "frank_jwt",
  "hex",
@@ -822,7 +829,7 @@ checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
 dependencies = [
  "autocfg",
  "num-integer",
- "num-traits 0.2.11",
+ "num-traits",
 ]
 
 [[package]]
@@ -832,16 +839,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f6ea62e9d81a77cd3ee9a2a5b9b609447857f3d358704331e4ef39eb247fcba"
 dependencies = [
  "autocfg",
- "num-traits 0.2.11",
-]
-
-[[package]]
-name = "num-traits"
-version = "0.1.43"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92e5113e9fd4cc14ded8e499429f396a20f98c772a47cc8622a736e1ec843c31"
-dependencies = [
- "num-traits 0.2.11",
+ "num-traits",
 ]
 
 [[package]]
@@ -1293,7 +1291,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "tuple",
 ]
 
 [[package]]
@@ -1314,7 +1311,7 @@ checksum = "2b25ecba7165254f0c97d6c22a64b1122a03634b18d20a34daf21e18f892e618"
 dependencies = [
  "chrono",
  "num-bigint",
- "num-traits 0.2.11",
+ "num-traits",
 ]
 
 [[package]]
@@ -1619,16 +1616,6 @@ name = "try-lock"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e604eb7b43c06650e854be16a2a03155743d3752dd1c943f6829e26b7a36e382"
-
-[[package]]
-name = "tuple"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "014493a81b7f393503eb896ab5b268532baff9359a7f4efe347dca3359f317f2"
-dependencies = [
- "num-traits 0.1.43",
- "serde",
-]
 
 [[package]]
 name = "unicase"
