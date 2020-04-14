@@ -256,8 +256,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             match ghost_matches.subcommand() {
                 // since so many subcommands ,we can use for loop to reduce code 
                 // ref https://github.com/cloudflare/cloudflare-rs/blob/master/cloudflare-examples/src/main.rs
-                ("post", Some(post_matches)) => {
-                    println!("to post posts/pages { }", post_matches.value_of("blog").unwrap());
+                ("add", Some(add_matches)) => {
+                    println!("to post posts/pages { }", add_matches.value_of("post").unwrap());
                     // call lib ghost
                     // why need await ,only no use some await
                     let resp = ghost::post().await?;

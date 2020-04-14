@@ -176,17 +176,85 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
     Ok(())
 }
 pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
+    // need md file, tags, status:draft or published
+    // upload image or use baidu image
+    // custom_excerpt 
+    //
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
+    let md = String::from("# head1");
+    let mobiledoc = json!({
+                                          "version": "0.3.1",
+                                          "markups": [],
+                                          "atoms": [],
+                                          "cards": [[
+                                                 "markdown", 
+                                                  {
+                                                    "cardName": "markdown",
+                                                    "markdown": md
+                                                  }
+                                                  ]],
+                                          "sections": [[10,0]]    
+
+    });
     
     let post_body = json!({
                          "posts": [
                                      { 
-                                       "title": "test hatitel"
+                                       "title": "test hatitel",
+                                       "tags": ["Note"],
+                                       "authors": ["bicx@taocloudx.com"],
+                                     //  "email": "bicx@taocloudx.com",
+                                       "custom_excerpt": "excerpt",
+                                       "mobiledoc": mobiledoc.to_string(),
+                                     //  "primary_author": { "email": "bicx@taocloudx", },
+      //                                 "mobiledoc":  "{\"version\":\"0.3.1\",\"atoms\":[],\"cards\":[[\"markdown\",{\"cardName\":\"markdown\",\"markdown\":\"head1\"}]],\"markups\":[],\"sections\":[[10,0]]}",         
+                                    //   "mobiledoc": {
+                                    //       "version": "0.3.1",
+                                    //       "markups": [],
+                                    //       "atoms": [],
+                                    //       "cards": [[
+                                    //              "markdown", 
+                                    //               {
+                                    //                 "cardName": "markdown",
+                                    //                 "markdown": "head1"
+                                    //               }
+                                    //               ]],
+                                    //       "sections": [[10,0]]    
+                                    //   }
+
                                      }  
+                                     
                                  ],   
                        });
+
+ //   
+ //   println!("post body {}", post_body["posts"][0]);
+ //   println!("post body {}", post_body.to_string());
+ //   println!("post body {:?}", post_body.to_string());
+ //   println!("post body {:#?}", post_body.to_string());
+    // return Ok(());   
   
+    // const options = {
+    //         title: title,
+    //         mobiledoc: JSON.stringify({
+    //                                   version: '0.3.1',
+    //                                   markups: [],
+    //                                   atoms: [],
+    //                                   cards: [['markdown', {cardName: 'markdown', markdown: Buffer.from(fileContent).toString()}]],
+    //                                   sections: [[10, 0]]
+    //                               }),
+    //         tags: ["Note"],
+    //         //authors: ["roidinev@gmail.com"],
+    //         authors: ["bicx@taocloudx.com"],
+    //         custom_excerpt: "网站、博客文章、论文推荐或评论",
+    //         status: 'published'
+    // }
+    //  pure endpoint format
+    //         "mobiledoc": "{\"version\":\"0.3.1\",\"atoms\":[],\"cards\":[],\"markups\":[],\"sections\":[[1,\"p\",[[0,[],0,\"My post content. Work in progress...\"]]]]}",
+    //         "mobiledoc": "{\"version\":\"0.3.1\",\"atoms\":[],\"cards\":[[\"markdown\",{\"cardName\":\"markdown\",\"markdown\":\"head1\"}]],\"markups\":[],\"sections\":[[10,0]]}",
+    //         \"mobiledoc\":{\"atoms\":[],\"cards\":[[\"markdown\",{\"cardName\":\"markdown\",\"markdown\":\"head1\"}]],\"markups\":[],\"sections\":[[10,0]],\"version\":\"0.3.1\"},
+
     let resp = reqwest::Client::new().post("https://blog.approachai.com/ghost/api/v3/admin/posts/")
         .header("Authorization", key.as_str())
         .header("Content-Type", "application/json")
