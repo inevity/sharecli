@@ -186,56 +186,20 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     //   tags: [],
     //   status: draft,
     //   custom_excerpt: ""
+    //   authors:
     // }
     //   
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
-   // let data = json!(data);
-    // let v:Value = serde_json::from_str(data.as_str())?;
-    //let v:Value = serde_json::from_str(data)?;
-    //println!("v md{}", v["md"]);
-   // println!("v md{}", v);
-    println!("first data {} ", data);
-    println!("first data {:?} ", data);
-    println!("first data {:#?} ", data);
- //   // json! must use struct as var
- //   let data = json!(data);
- //   // data = ();
- //   println!("v no tostring md{}", data["md"]);
- //   println!("v data tostring {}", data.to_string());
- //   println!("v data {}", data);
-    //let v:Value = serde_json::from_str(data.to_string().as_str())?;
     let v: Value = serde_json::from_str(data)?;
-    //println!("v md{}", data['md']);
-    println!("va md{}", v["md"]);
-    println!("va md{}", v["md"].to_string());
 
 
     let md = &v["md"];
-    let p = env::current_dir().unwrap();
-    println!("The current directory is {}", p.display());
-    println!("mdtext{}", md.to_string());
-    // let mut f = File::open(md.to_string())?;
     let p1 = md.as_str().unwrap();
     let mut f = File::open(p1)?;
-    //let mut f = File::open("test.md")?;
-    println!("mdtext{:?}", f);
-//    let mut buffer = [0;100000];
-//    f.read(&mut buffer)?;
-//
-//    let mut buffer = Vec::new();
-//    f.read_to_end(&mut buffer)?;
-//
     let mut buffer = String::new();
-
     let mdtext = f.read_to_string(&mut buffer)?;
-    // let mdtext = fs::read_to_string(md.to_string())?.parse()?;
-    // let mdtext = fs::read_to_string(md.to_string())?;
-  //  let mdtext = fs::read_to_string("test.md")?;
-    println!("mdtext{}", buffer);
-   // println!("mdtext{}", fs::DirEntry);
 
-   // let md = v.get("md").unwrap();
     let title = &v["title"];
     let mut tags = &v["tags"];
     println!("tags{}", tags);
@@ -248,21 +212,11 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     
     let defs = &json!("draft");
     let mut status = &v["status"];// json!(null)
-        //unwrap null == None
-   // status = ();
-    println!("status{}", status);
-   // let mut statusstr: Value;
-    if status != &json!(null)  {
-      //  statusstr = status.to_string();
-       // println!("status{}", statusstr);
-    } else {
-        // statusstr = String::from("draft");
-        //  statusstr = String::from("draft");
+    if status == &json!(null) {
         status = defs;
     }
 
 
-    // println!("statusstr {}", statusstr);
     let mut authors = &v["authors"];
    //  let emptyauthors = &json!([]);
     let emptyauthors = &json!(["bicx@taocloudx.com"]);
@@ -271,9 +225,6 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
        //  if defaut from env 
        //  authoros = default    
     }
-
-
-    
 
     let mobiledoc = json!({
                                           "version": "0.3.1",
