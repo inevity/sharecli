@@ -12,6 +12,9 @@ extern crate dotenv;
 use dotenv::dotenv;
 use std::env;
 
+use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
 
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -209,6 +212,29 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
 
 
     let md = &v["md"];
+    let p = env::current_dir().unwrap();
+    println!("The current directory is {}", p.display());
+    println!("mdtext{}", md.to_string());
+    // let mut f = File::open(md.to_string())?;
+    let p1 = md.as_str().unwrap();
+    let mut f = File::open(p1)?;
+    //let mut f = File::open("test.md")?;
+    println!("mdtext{:?}", f);
+//    let mut buffer = [0;100000];
+//    f.read(&mut buffer)?;
+//
+//    let mut buffer = Vec::new();
+//    f.read_to_end(&mut buffer)?;
+//
+    let mut buffer = String::new();
+
+    let mdtext = f.read_to_string(&mut buffer)?;
+    // let mdtext = fs::read_to_string(md.to_string())?.parse()?;
+    // let mdtext = fs::read_to_string(md.to_string())?;
+  //  let mdtext = fs::read_to_string("test.md")?;
+    println!("mdtext{}", buffer);
+   // println!("mdtext{}", fs::DirEntry);
+
    // let md = v.get("md").unwrap();
     let title = &v["title"];
     let mut tags = &v["tags"];
@@ -220,7 +246,7 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
     let excerpt = &v["custom_excerpt"];
     
-    let defs = &json!("published");
+    let defs = &json!("draft");
     let mut status = &v["status"];// json!(null)
         //unwrap null == None
    // status = ();
@@ -234,9 +260,20 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
         //  statusstr = String::from("draft");
         status = defs;
     }
+
+
     // println!("statusstr {}", statusstr);
+    let mut authors = &v["authors"];
+   //  let emptyauthors = &json!([]);
+    let emptyauthors = &json!(["bicx@taocloudx.com"]);
+    if authors == &json!(null) {
+         authors = emptyauthors;
+       //  if defaut from env 
+       //  authoros = default    
+    }
 
 
+    
 
     let mobiledoc = json!({
                                           "version": "0.3.1",
@@ -246,7 +283,7 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
                                                  "markdown", 
                                                   {
                                                     "cardName": "markdown",
-                                                    "markdown": md
+                                                    "markdown": buffer,
                                                   }
                                                   ]],
                                           "sections": [[10,0]]    
@@ -259,12 +296,12 @@ pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
                                        "title": title, // which is Value
                                        //"tags": ["Note"],
                                        "tags": tags,
-                                       "authors": ["bicx@taocloudx.com"],
+                                       // "authors": ["bicx@taocloudx.com"],
+                                       "authors": authors,
                                      //  "email": "bicx@taocloudx.com",
-                                       "custom_excerpt": excerpt.to_string(),
+                                       "custom_excerpt": excerpt,
                                        "mobiledoc": mobiledoc.to_string(),
                                        "status": status,
-                                     //  "primary_author": { "email": "bicx@taocloudx", },
       //                                 "mobiledoc":  "{\"version\":\"0.3.1\",\"atoms\":[],\"cards\":[[\"markdown\",{\"cardName\":\"markdown\",\"markdown\":\"head1\"}]],\"markups\":[],\"sections\":[[10,0]]}",         
                                     //   "mobiledoc": {
                                     //       "version": "0.3.1",
