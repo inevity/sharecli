@@ -77,7 +77,8 @@ struct Postl {
     title:   String,
     //excerpt: Option<String>,
     //cexcerpt: String,
-    custom_excerpt: String,
+    custom_excerpt: Option<String>,
+    updated_at: String,
 }
 #[derive(Debug, Deserialize)]
 struct Author {
@@ -198,16 +199,17 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
         .text()
         .await?;
 
- //  let v: Value = serde_json::from_str(&resp)?;
+   let v: Value = serde_json::from_str(&resp)?;
 
- //  println!("list raw: {:#?}", v);
+   println!("list raw: {:#?}", v);
    let data: Data = serde_json::from_str(&resp)?;
    // println!("list: {:?}", data);
    for post in data.posts {
        // println!("slug: {}, id: {};{:?};{};{:?}", post.slug, post.id, post.tags, post.status, post.authors);
        // println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}", post.slug, post.id, post.status, post.title, post.authors, post.tags);
        //println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}", post.slug, post.id, post.status, post.title, post.authors?, post.tags?);
-       println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}\nexcerpt: {:?}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.custom_excerpt);
+       //println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}\nexcerpt: {:?}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.custom_excerpt);
+       println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}|||excerpt: {:?}|||updated_at: {}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.custom_excerpt,post.updated_at);
       // println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}\n excerpt: {}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.excerpt);
        //println!("slug: {}, id: {}; status:{:?};title: {:?}; tags: {:?}", post.slug, post.id, post.status, post.title, post.tags.unwrap());
    //    println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}", post.slug, post.id, post.status, post.title, v["authors"][0], post.tags.unwrap());
@@ -222,70 +224,110 @@ pub async fn edit(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     // need set tags and authors, which not merge,will replace origin post
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
-    let v: Value = serde_json::from_str(data)?;
+    let mut v: Value = serde_json::from_str(data)?;
 
-
-    let md = &v["md"];
-    let p1 = md.as_str().unwrap();
-    let mut f = File::open(p1)?;
-    let mut buffer = String::new();
-    let mdtext = f.read_to_string(&mut buffer)?;
-
-    let title = &v["title"];
-    let mut tags = &v["tags"];
-    println!("tags{}", tags);
-    let emptytag = &json!([]);
-    if tags == &json!(null) {
-         tags = emptytag;
-    }
-    let excerpt = &v["custom_excerpt"];
-    
-    let defs = &json!("draft");
-    let mut status = &v["status"];// json!(null)
-    if status == &json!(null) {
-        status = defs;
-    }
-
-
-    let mut authors = &v["authors"];
-    let emptyauthors = &json!(["bicx@taocloudx.com"]);
-    if authors == &json!(null) {
-         authors = emptyauthors;
-    }
-
-    let id = &v["id"].as_str().unwrap();
+    // now i only use the v, and delete no need item
+    // get id
+    // get md 
+    let mut m = v.as_object_mut().unwrap();
+    println!("m {:?}", m);
+    //let id = m.get("id");
+    //let md = m.get("md");
+    let id = m.remove("id").unwrap();
+    // id Value
+    //let id = m.remove("id").unwrap().as_str().unwrap();
+    let id = id.as_str().unwrap();
     println!("id {}", id);
 
 
-    let utc: DateTime<Utc> = Utc::now();
-    let date = utc.to_rfc3339_opts(SecondsFormat::Millis, true);
-    println!("date {}", date);
-    let mobiledoc = json!({
-                                          "version": "0.3.1",
-                                          "markups": [],
-                                          "atoms": [],
-                                          "cards": [[
-                                                 "markdown", 
-                                                  {
-                                                    "cardName": "markdown",
-                                                    "markdown": buffer,
-                                                  }
-                                                  ]],
-                                          "sections": [[10,0]]    
+    let md = m.remove("md").unwrap();
 
-    });
+
+
+
+    let mut buffer = String::new();
+    if md != json!(null) {
+
+        let p1 = md.as_str().unwrap();
+        let mut f = File::open(p1)?;
+        println!("f{:?}", f);
+        let mdtext = f.read_to_string(&mut buffer)?;
+    }
+//
+//    let id = &v["id"].as_str().unwrap();
+//    println!("id {}", id);
+//
+//    // default para
+//    // how?
+//    let title = &v["title"];
+//  //  if title == &json!(null) {
+//
+//  //  }
+//
+//    let mut tags = &v["tags"];
+//    println!("tags{}", tags);
+//    let emptytag = &json!([]);
+//    if tags == &json!(null) {
+//         tags = emptytag;
+//    }
+//    let excerpt = &v["custom_excerpt"];
+//    
+//    let defs = &json!("draft");
+//    let mut status = &v["status"];// json!(null)
+//    if status == &json!(null) {
+//        status = defs;
+//    }
+//
+//
+//    let mut authors = &v["authors"];
+//    let emptyauthors = &json!(["bicx@taocloudx.com"]);
+//    if authors == &json!(null) {
+//         authors = emptyauthors;
+//    }
+//
+//
+//
+//    let utc: DateTime<Utc> = Utc::now();
+//    let date = utc.to_rfc3339_opts(SecondsFormat::Millis, true);
+//    println!("date {}", date);
+//    m.insert("updated_at".to_string(), json!(date));
+
+    // let mobiledoc : Value;
+    let mobiledoc;
+    if md != json!(null) {
+
+            mobiledoc = json!({
+                                               "version": "0.3.1",
+                                               "markups": [],
+                                               "atoms": [],
+                                               "cards": [[
+                                                      "markdown", 
+                                                       {
+                                                         "cardName": "markdown",
+                                                         "markdown": buffer,
+                                                       }
+                                                       ]],
+                                               "sections": [[10,0]]    
+
+         });
+         // m.insert("mobiledoc".to_string(), mobiledoc.to_string());
+         m.insert("mobiledoc".to_string(), Value::String(mobiledoc.to_string()));
+    }
+    
+    println!("fm {:?}", m);
     
     let post_body = json!({
                          "posts": [
-                                     { 
-                                       "title": title, // which is Value
-                                       "tags": tags,
-                                       "authors": authors,
-                                       "custom_excerpt": excerpt,
-                                       "mobiledoc": mobiledoc.to_string(),
-                                       "status": status,
-                                       "updated_at": date,
-                                     }  
+                                    // { 
+                                    //   "title": title, // which is Value
+                                    //   "tags": tags,
+                                    //   "authors": authors,
+                                    //   "custom_excerpt": excerpt,
+                                    //   "mobiledoc": mobiledoc.to_string(),
+                                    //   "status": status,
+                                    //   "updated_at": date,
+                                    // }  
+                                    m
                                      
                                  ],   
                        });
@@ -294,6 +336,10 @@ pub async fn edit(data: &str) -> Result<(), Box<dyn std::error::Error>> {
    println!("post body {}", post_body.to_string());
    println!("post body {:?}", post_body.to_string());
    println!("post body {:#?}", post_body.to_string());
+
+
+   println!("url{}", format!("https://blog.approachai.com/ghost/api/v3/admin/posts/{}/",id).as_str());
+
     let resp = reqwest::Client::new().request(reqwest::Method::PUT, format!("https://blog.approachai.com/ghost/api/v3/admin/posts/{}/",id).as_str())
         .header("Authorization", key.as_str())
         .header("Content-Type", "application/json")
