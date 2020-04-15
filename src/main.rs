@@ -5,6 +5,8 @@
 ///  cargo build && ./target/debug/sharecli ghost add post -d '{"md": "./a.md", "tags": [], "status": "draft", "custom_excerpt":"" }'
 ///       md must path, tags can empty, status can draft, custom_excerpt must.
 ///  cargo build && ./target/debug/sharecli ghost add post -d '{"md": "./a.md", "custom_excerpt":"" }'
+///  10696  cargo build && ./target/debug/sharecli ghost add post -d '{"md": "test.md", "title":"test post2","custom_excerpt":"abstract"}' 
+///  must other tags[], authors =[],
 extern crate ghost;
 extern crate clap;
 extern crate tokio;
