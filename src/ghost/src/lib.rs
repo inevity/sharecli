@@ -175,14 +175,69 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
     let v: Value = serde_json::from_str(resp.as_ref())?;
     Ok(())
 }
-pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     // need md file, tags, status:draft or published
     // upload image or use baidu image
     // custom_excerpt 
-    //
+    // { md : "./a.md",
+    //   tags: [],
+    //   status: draft,
+    //   custom_excerpt: ""
+    // }
+    //   
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
-    let md = String::from("# head1");
+   // let data = json!(data);
+    // let v:Value = serde_json::from_str(data.as_str())?;
+    //let v:Value = serde_json::from_str(data)?;
+    //println!("v md{}", v["md"]);
+   // println!("v md{}", v);
+    println!("first data {} ", data);
+    println!("first data {:?} ", data);
+    println!("first data {:#?} ", data);
+ //   // json! must use struct as var
+ //   let data = json!(data);
+ //   // data = ();
+ //   println!("v no tostring md{}", data["md"]);
+ //   println!("v data tostring {}", data.to_string());
+ //   println!("v data {}", data);
+    //let v:Value = serde_json::from_str(data.to_string().as_str())?;
+    let v: Value = serde_json::from_str(data)?;
+    //println!("v md{}", data['md']);
+    println!("va md{}", v["md"]);
+    println!("va md{}", v["md"].to_string());
+
+
+    let md = &v["md"];
+   // let md = v.get("md").unwrap();
+    let title = &v["title"];
+    let mut tags = &v["tags"];
+    println!("tags{}", tags);
+    let emptytag = &json!([]);
+    if tags == &json!(null) {
+         //tags = &json!([]);
+         tags = emptytag;
+    }
+    let excerpt = &v["custom_excerpt"];
+    
+    let defs = &json!("published");
+    let mut status = &v["status"];// json!(null)
+        //unwrap null == None
+   // status = ();
+    println!("status{}", status);
+   // let mut statusstr: Value;
+    if status != &json!(null)  {
+      //  statusstr = status.to_string();
+       // println!("status{}", statusstr);
+    } else {
+        // statusstr = String::from("draft");
+        //  statusstr = String::from("draft");
+        status = defs;
+    }
+    // println!("statusstr {}", statusstr);
+
+
+
     let mobiledoc = json!({
                                           "version": "0.3.1",
                                           "markups": [],
@@ -201,12 +256,14 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
     let post_body = json!({
                          "posts": [
                                      { 
-                                       "title": "test hatitel",
-                                       "tags": ["Note"],
+                                       "title": title, // which is Value
+                                       //"tags": ["Note"],
+                                       "tags": tags,
                                        "authors": ["bicx@taocloudx.com"],
                                      //  "email": "bicx@taocloudx.com",
-                                       "custom_excerpt": "excerpt",
+                                       "custom_excerpt": excerpt.to_string(),
                                        "mobiledoc": mobiledoc.to_string(),
+                                       "status": status,
                                      //  "primary_author": { "email": "bicx@taocloudx", },
       //                                 "mobiledoc":  "{\"version\":\"0.3.1\",\"atoms\":[],\"cards\":[[\"markdown\",{\"cardName\":\"markdown\",\"markdown\":\"head1\"}]],\"markups\":[],\"sections\":[[10,0]]}",         
                                     //   "mobiledoc": {
@@ -229,10 +286,10 @@ pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
                        });
 
  //   
- //   println!("post body {}", post_body["posts"][0]);
- //   println!("post body {}", post_body.to_string());
- //   println!("post body {:?}", post_body.to_string());
- //   println!("post body {:#?}", post_body.to_string());
+   println!("post body {}", post_body["posts"][0]);
+   println!("post body {}", post_body.to_string());
+   println!("post body {:?}", post_body.to_string());
+   println!("post body {:#?}", post_body.to_string());
     // return Ok(());   
   
     // const options = {

@@ -2,6 +2,9 @@
 ///  sharecli ghost list post -q 'fields=title,url,id,slug,status&limit=all&status=draft&page=2'|grep test
 ///  sharecli ghost delete post --id 5e73458d4cea2827f8cf4b96,5e7344774cea2827f8cf4b92
 ///  sharecli ghost delete post --id 5e7343c64cea2827f8cf4b8e,5e7343654cea2827f8cf4b8a,5e73430b4cea2827f8cf4b86,5e7341644cea2827f8cf4b7e
+///  cargo build && ./target/debug/sharecli ghost add post -d '{"md": "./a.md", "tags": [], "status": "draft", "custom_excerpt":"" }'
+///       md must path, tags can empty, status can draft, custom_excerpt must.
+///  cargo build && ./target/debug/sharecli ghost add post -d '{"md": "./a.md", "custom_excerpt":"" }'
 extern crate ghost;
 extern crate clap;
 extern crate tokio;
@@ -123,7 +126,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
              subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
          };
          let add = &Section::<HttpApiClient> {
-             args: vec![Arg::with_name("post").required(true)], 
+             args: vec![Arg::with_name("post").required(true),
+                        Arg::with_name("data").short('d').long("data").help("post body").takes_value(true)
+             ], 
              description: "add post",
              function: None::<&SectionFunction<HttpApiClient>>,
              subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
@@ -258,9 +263,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // ref https://github.com/cloudflare/cloudflare-rs/blob/master/cloudflare-examples/src/main.rs
                 ("add", Some(add_matches)) => {
                     println!("to post posts/pages { }", add_matches.value_of("post").unwrap());
+                    println!("to post posts/pages's body: {:?}", add_matches.value_of("data").unwrap());
+                    println!("to post posts/pages's body: {}", add_matches.value_of("data").unwrap());
+                    let data = add_matches.value_of("data").unwrap();
+
+
                     // call lib ghost
                     // why need await ,only no use some await
-                    let resp = ghost::post().await?;
+                    let resp = ghost::post(data).await?;
                     println!("post blog {:#?}", resp); //mean
                 }
 
