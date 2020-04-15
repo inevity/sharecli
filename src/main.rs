@@ -1,5 +1,8 @@
 ///  usage help:
 ///  sharecli ghost list post -q 'fields=title,url,id,slug,status&limit=all&status=draft&page=2'|grep test
+///  cargo build && ./target/debug/sharecli ghost list post -q 'fields=title,url,id,slug&include=tags,authors&limit=2&filter=status:published&page=1'
+///  cargo build && ./target/debug/sharecli ghost list post -q 'fields=title,url,id,slug,status,excerpt,custom_excerpt&include=tags,authors&limit=1&filter=status:published&page=1'
+///  good 
 ///  sharecli ghost delete post --id 5e73458d4cea2827f8cf4b96,5e7344774cea2827f8cf4b92
 ///  sharecli ghost delete post --id 5e7343c64cea2827f8cf4b8e,5e7343654cea2827f8cf4b8a,5e73430b4cea2827f8cf4b86,5e7341644cea2827f8cf4b7e
 ///  cargo build && ./target/debug/sharecli ghost add post -d '{"md": "./a.md", "tags": [], "status": "draft", "custom_excerpt":"" }'
@@ -127,6 +130,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
              function: None::<&SectionFunction<HttpApiClient>>,
              subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
          };
+        let edit = &Section::<HttpApiClient> {
+             args: vec![Arg::with_name("post").required(true),
+                        // Arg::with_name("postid").short('i').long("id").value_delimiter(",").help("need post id").takes_value(true)
+                        Arg::with_name("data").short('d').long("data").help("edit post body").takes_value(true)
+                       ], 
+             description: "edit post",
+             function: None::<&SectionFunction<HttpApiClient>>,
+             subcommands: None::<HashMap<&str, &Section::<HttpApiClient>>>,
+         };
          let add = &Section::<HttpApiClient> {
              args: vec![Arg::with_name("post").required(true),
                         Arg::with_name("data").short('d').long("data").help("post body").takes_value(true)
@@ -145,6 +157,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
          };
          let gsubcommands = hashmap! {
              "delete" => delete,
+             "edit" => edit,
              "add" => add,
              "list" => list,
          };
@@ -275,7 +288,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let resp = ghost::post(data).await?;
                     println!("post blog {:#?}", resp); //mean
                 }
-
+                ("edit", Some(edit_matches)) => {
+                    let data = edit_matches.value_of("data").unwrap();
+                    println!("to edit posts/page: {}", data);
+                    let resp = ghost::edit(data).await?;
+                    println!("edit blog {:#?}", resp); //mean
+                }
                 ("delete", Some(delete_matches)) => {
                     // Now we have a reference to delete's matches
                     if let Some(id) = delete_matches.values_of("postid") {
@@ -331,14 +349,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
 
-    // You can see how many times a particular flag or argument occurred
-    // Note, only flags can have multiple occurrences
-    match matches.occurrences_of("debuggg") {
-        0 => println!("Debug mode is off"),
-        1 => println!("Debug mode is kind of on"),
-        2 => println!("Debug mode is on"),
-        3 | _ => println!("Don't be crazy"),
-    }
+//    // You can see how many times a particular flag or argument occurred
+//    // Note, only flags can have multiple occurrences
+//    match matches.occurrences_of("debuggg") {
+//        0 => println!("Debug mode is off"),
+//        1 => println!("Debug mode is kind of on"),
+//        2 => println!("Debug mode is on"),
+//        3 | _ => println!("Don't be crazy"),
+//    }
 
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level app

@@ -32,6 +32,7 @@ pub mod endpoints;
 pub mod framework;
 
 
+use chrono::prelude::*;
 #[derive(Debug, Serialize, Deserialize)]
 struct Claim {
     iat: i64,
@@ -61,7 +62,34 @@ struct Post {
 struct Postl {
     slug: String,
     id: String,
+    // list no return tags,authors, return html, excerpt,og_image, twitter_image
+    // https://ghost.org/docs/api/v3/content/#posts
+//    tags: Option<Vec<String>>, 
+      tags: Option<Vec<Tag>>,
+//    authors: Option<Vec<String>>,
+//    authors will hashmap 
+    authors: Option<Vec<Author>>,
+//   // status: Option<String>,
+   // title: Option<String>,
+    // tags:    Vec<String>, 
+   // authors: Vec<String>,
+    status:  String,
+    title:   String,
+    //excerpt: Option<String>,
+    //cexcerpt: String,
+    custom_excerpt: String,
 }
+#[derive(Debug, Deserialize)]
+struct Author {
+    name: String,
+    email: String,
+}
+#[derive(Debug, Deserialize)]
+struct Tag {
+    name: String,
+}
+
+
 
 #[derive(Debug, Deserialize)]
 struct Data {
@@ -156,6 +184,9 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
     let rawkey = makereq().unwrap();
     let key = format!("Ghost {}", rawkey);
     
+  //  println!("q1 {:?}", q1);
+  //  println!("q2 {:?}", q2);
+
     let resp = reqwest::Client::new().get("https://blog.approachai.com/ghost/api/v3/admin/posts")
         .header("Authorization", key.as_str())
         .header("Content-Type", "application/json")
@@ -167,16 +198,114 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
         .text()
         .await?;
 
-    let v: Value = serde_json::from_str(&resp)?;
-    let data: Data = serde_json::from_str(&resp)?;
-    for post in data.posts {
-       println!("slug: {}, id: {}", post.slug, post.id);
-    }
+ //  let v: Value = serde_json::from_str(&resp)?;
+
+ //  println!("list raw: {:#?}", v);
+   let data: Data = serde_json::from_str(&resp)?;
+   // println!("list: {:?}", data);
+   for post in data.posts {
+       // println!("slug: {}, id: {};{:?};{};{:?}", post.slug, post.id, post.tags, post.status, post.authors);
+       // println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}", post.slug, post.id, post.status, post.title, post.authors, post.tags);
+       //println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}", post.slug, post.id, post.status, post.title, post.authors?, post.tags?);
+       println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}\nexcerpt: {:?}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.custom_excerpt);
+      // println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}\n excerpt: {}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.excerpt);
+       //println!("slug: {}, id: {}; status:{:?};title: {:?}; tags: {:?}", post.slug, post.id, post.status, post.title, post.tags.unwrap());
+   //    println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}", post.slug, post.id, post.status, post.title, v["authors"][0], post.tags.unwrap());
+   }
 
 
     //must annotaon type
-    let v: Value = serde_json::from_str(resp.as_ref())?;
+   // let v: Value = serde_json::from_str(resp.as_ref())?;
     Ok(())
+}
+pub async fn edit(data: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // need set tags and authors, which not merge,will replace origin post
+    let rawkey = makereq().unwrap();
+    let key = format!("Ghost {}", rawkey);
+    let v: Value = serde_json::from_str(data)?;
+
+
+    let md = &v["md"];
+    let p1 = md.as_str().unwrap();
+    let mut f = File::open(p1)?;
+    let mut buffer = String::new();
+    let mdtext = f.read_to_string(&mut buffer)?;
+
+    let title = &v["title"];
+    let mut tags = &v["tags"];
+    println!("tags{}", tags);
+    let emptytag = &json!([]);
+    if tags == &json!(null) {
+         tags = emptytag;
+    }
+    let excerpt = &v["custom_excerpt"];
+    
+    let defs = &json!("draft");
+    let mut status = &v["status"];// json!(null)
+    if status == &json!(null) {
+        status = defs;
+    }
+
+
+    let mut authors = &v["authors"];
+    let emptyauthors = &json!(["bicx@taocloudx.com"]);
+    if authors == &json!(null) {
+         authors = emptyauthors;
+    }
+
+    let id = &v["id"].as_str().unwrap();
+    println!("id {}", id);
+
+
+    let utc: DateTime<Utc> = Utc::now();
+    let date = utc.to_rfc3339_opts(SecondsFormat::Millis, true);
+    println!("date {}", date);
+    let mobiledoc = json!({
+                                          "version": "0.3.1",
+                                          "markups": [],
+                                          "atoms": [],
+                                          "cards": [[
+                                                 "markdown", 
+                                                  {
+                                                    "cardName": "markdown",
+                                                    "markdown": buffer,
+                                                  }
+                                                  ]],
+                                          "sections": [[10,0]]    
+
+    });
+    
+    let post_body = json!({
+                         "posts": [
+                                     { 
+                                       "title": title, // which is Value
+                                       "tags": tags,
+                                       "authors": authors,
+                                       "custom_excerpt": excerpt,
+                                       "mobiledoc": mobiledoc.to_string(),
+                                       "status": status,
+                                       "updated_at": date,
+                                     }  
+                                     
+                                 ],   
+                       });
+
+   println!("post body {}", post_body["posts"][0]);
+   println!("post body {}", post_body.to_string());
+   println!("post body {:?}", post_body.to_string());
+   println!("post body {:#?}", post_body.to_string());
+    let resp = reqwest::Client::new().request(reqwest::Method::PUT, format!("https://blog.approachai.com/ghost/api/v3/admin/posts/{}/",id).as_str())
+        .header("Authorization", key.as_str())
+        .header("Content-Type", "application/json")
+        .json(&post_body)
+        .send()
+        .await?
+        .text()
+        .await?;
+     let v: Value = serde_json::from_str(&resp)?;
+     println!("edit resp json iss : {:#?} ", v);
+
+     Ok(())
 }
 pub async fn post(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     // need md file, tags, status:draft or published
