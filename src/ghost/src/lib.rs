@@ -57,6 +57,14 @@ struct Fheader {
 struct Post {
    posts: Vec<HashMap<String, String>>,
 }
+//#[derive(Debug, Serialize, Deserialize)]
+//struct Tag {
+//   posts: HashMap<String, String>
+//}
+//#[derive(Debug, Serialize, Deserialize)]
+//struct Tag {
+//   name: String,
+//}
 
 #[derive(Debug, Deserialize)]
 struct Postl {
@@ -65,13 +73,14 @@ struct Postl {
     // list no return tags,authors, return html, excerpt,og_image, twitter_image
     // https://ghost.org/docs/api/v3/content/#posts
 //    tags: Option<Vec<String>>, 
-      tags: Option<Vec<Tag>>,
+     tags: Option<Vec<Tag>>,
+     //tags: Option<Vec<HashMap<String, String>>>,
 //    authors: Option<Vec<String>>,
 //    authors will hashmap 
-    authors: Option<Vec<Author>>,
+     authors: Option<Vec<Author>>,
 //   // status: Option<String>,
    // title: Option<String>,
-    // tags:    Vec<String>, 
+   // tags:    Vec<String>, 
    // authors: Vec<String>,
     status:  String,
     title:   String,
@@ -199,11 +208,15 @@ pub async fn list(q1: Vec<Query1>, q2: Vec<Query2>) -> Result<(), Box<dyn std::e
         .text()
         .await?;
 
-   let v: Value = serde_json::from_str(&resp)?;
+//    println!("list resp status {}", resp.status());
+   // println!("list raw: {:#?}", resp);
+    let v: Value = serde_json::from_str(&resp)?;
 
-   println!("list raw: {:#?}", v);
-   let data: Data = serde_json::from_str(&resp)?;
+//    println!("list raw: {:?}", v);
+    let data: Data = serde_json::from_str(&resp)?;
+  // let data: Data = serde_json::from_str(resp.as_ref()).unwrap();
    // println!("list: {:?}", data);
+   //println!("test:");
    for post in data.posts {
        println!("slug: {}, id: {}; status:{:?};title: {:?};authors: {:?} ; tags: {:?}|||excerpt: {:?}|||updated_at: {}", post.slug, post.id, post.status, post.title, post.authors.unwrap(), post.tags.unwrap(), post.custom_excerpt,post.updated_at);
    }
@@ -228,16 +241,19 @@ pub async fn edit(data: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("id {}", id);
 
 
-    let md = m.remove("md").unwrap();
+   // let md = m.remove("md").unwrap();
+    // if let Some(md) = m["md"] {
+    let md = &m["md"];
+    //let md = m.remove("md")?;
     let mut buffer = String::new();
-    if md != json!(null) {
+    if md != &json!(null) {
         let p1 = md.as_str().unwrap();
         let mut f = File::open(p1)?;
         println!("f{:?}", f);
         let mdtext = f.read_to_string(&mut buffer)?;
     }
     let mobiledoc;
-    if md != json!(null) {
+    if md != &json!(null) {
 
             mobiledoc = json!({
                                                "version": "0.3.1",
@@ -255,12 +271,18 @@ pub async fn edit(data: &str) -> Result<(), Box<dyn std::error::Error>> {
          });
          m.insert("mobiledoc".to_string(), Value::String(mobiledoc.to_string()));
     }
+//    let tags = m.remove("tags").unwrap();
+//    m.insert("tags".to_string(), Value::String(tags.to_string()));
+    m.remove("md");
+
+
     
     let post_body = json!({
                          "posts": [
                                     m
                                  ],   
                        });
+     println!("edit resp json iss : {:#?} ", post_body);
     let resp = reqwest::Client::new().request(reqwest::Method::PUT, format!("https://blog.approachai.com/ghost/api/v3/admin/posts/{}/",id).as_str())
         .header("Authorization", key.as_str())
         .header("Content-Type", "application/json")
