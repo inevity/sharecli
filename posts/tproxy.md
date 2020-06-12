@@ -1,6 +1,6 @@
 # 环境
  
-光猫------路由器merlin A--------路由器openwrt B
+光猫------路由器merlin梅林 A--------路由器openwrt B
 原来主要通过A拨号上网，B闲置。
 为了探索透明代理，防止配置错误影响上网，计划在B上折腾，待条件成熟，考虑迁移到A上。
 A的一个LAN口与B的一个LAN口相连，B从A获取IP，或者静态设置IP。 暂时关闭B的WAN拨号功能，并开启WIFI功能。这样可以连接WIFIA或者WIFEB。
@@ -11,7 +11,7 @@ B上若实现了透明代理功能(DNS功能和代理功能），这样客户端
 
 # 计划
 ## 基本原型
-参考[透明代理TPROXY](https://guide.v2fly.org/app/tproxy.html#%E8%AE%BE%E7%BD%AE%E7%BD%91%E5%85%B3)。
+参考[透明代理TPROXY](参考v官方教程)。
 
 ## 优化
 考虑性能、DNS分流方案、Dot、IPv6、Nftable
@@ -37,8 +37,8 @@ service dnsmasq restart
 当然可以web或者直接修改配置文件/etc/config/dhcp的方式来完成. 以上两操作保证在B上可以ping通 www.baidu.com.
 * cat /proc/sys/net/ipv4/ip_forward    = 1
 * 手动配置某个客户端，将默认网关指向BIP即 192.168.1.16。此时 应当能正常上网。
-### ***REMOVED***客户端安装和配置
-* ***REMOVED***版本选择下载，首先判断cpu型号和大端字节序或者小端字节序
+### v客户端安装和配置
+* v版本选择下载，首先判断cpu型号和大端字节序或者小端字节序
 ```
 root@LEDE:~# cat /proc/cpuinfo
 system type		: Broadcom BCM4716
@@ -66,8 +66,8 @@ root@LEDE:~# hexdump -s 5 -n 1 -C /bin/busybox
 root@LEDE:~# echo -n I | hexdump -o | awk '{ print substr($2,6,1); exit}'
 1 //1 mean 小端字节序
 ```
-* ***REMOVED*** 安装
-  ***REMOVED***解压后60MB，但看B的空间，通过删除***REMOVED***解压后的重复文件可以放到/tmp下,有采用自行编译并用upx来压缩的方式，为了快速达到目标，这次用了usb盘
+* v 安装
+  v解压后60MB，但看B的空间，通过删除v解压后的重复文件可以放到/tmp下,有采用自行编译并用upx来压缩的方式，为了快速达到目标，这次用了usb盘
 ```
 root@LEDE:~# df -h
 Filesystem                Size      Used Available Use% Mounted on
@@ -82,24 +82,22 @@ block detect | uci import fstab
 uci set fstab.@mount[0].enabled='1' && uci set fstab.@global[0].anon_mount='1' && uci commit
 /sbin/block mount && service fstab enable
 #copy to B 
-scp ~/Downloads/***REMOVED***-linux-mipsle.zip root@192.168.1.16:/mnt/sda/***REMOVED***
+scp ~/Downloads/v-linux-mipsle.zip root@192.168.1.16:/mnt/sdav/v
 ```
-* run ***REMOVED***
+* run v
 ```
-  root@LEDE:/mnt/sda/***REMOVED***# mv v2ctl_softfloat v2ctl 
-  root@LEDE:/mnt/sda/***REMOVED***# mv ***REMOVED***_softfloat ***REMOVED***
   root@LEDE:~# opkg install curl
-  # config from system proxy or 参考透明代理tproxy的***REMOVED***的客户端配置 
-  root@LEDE:/mnt/sda/***REMOVED***# ./***REMOVED*** -c config.jsonsystemproxy  
-  root@LEDE:~# curl -so /dev/null -w "%{http_code}" google.com -x socks5://127.0.0.1:1080
+  # config from system proxy or 参考透明代理tproxy的v客户端配置 
+  root@LEDE:/mnt/sda/v# ./v -c config.jsonsystemproxy  
+  root@LEDE:~# curl -so /dev/null -w "%{http_code}" xxxx.com -x socks5://127.0.0.1:1080
   # 确保301/200就行。 
 ``` 
-* config ***REMOVED*** for tproxy 
+* config v for tproxy 
 ``` 
-  root@LEDE:/mnt/sda/***REMOVED***# opkg install iptables-mod-tproxy ipset
+  root@LEDE:/mnt/sda/v# opkg install iptables-mod-tproxy ipset
   # maybe we will use ipset later
  
-  root@OpenWrt:/mnt/sda/***REMOVED***# cat mytest3.sh
+  root@OpenWrt:/mnt/sda/v# cat mytest3.sh
   #!/bin/sh
   
   ip rule add fwmark 1 table 100 # add ip rule ,once a packet match the fwmark = 1,then lookup the route table 100.
@@ -110,28 +108,28 @@ scp ~/Downloads/***REMOVED***-linux-mipsle.zip root@192.168.1.16:/mnt/sda/***REM
   iptables -t mangle -A ONLYONE -j ACCEPT
   iptables -t mangle -A PREROUTING -m socket -j ONLYONE // prevent packet which have existing connectin to enter into tproxy twice
   
-  iptables -t mangle -N ***REMOVED***
-  iptables -t mangle -A ***REMOVED*** -d 127.0.0.1/32 -j RETURN
-  iptables -t mangle -A ***REMOVED*** -d 224.0.0.0/4 -j RETURN
-  iptables -t mangle -A ***REMOVED*** -d 255.255.255.255/32 -j RETURN
-  iptables -t mangle -A ***REMOVED*** -d 192.168.0.0/16 -p tcp -j RETURN
-  iptables -t mangle -A ***REMOVED*** -d 192.168.0.0/16 -p udp ! --dport 53 -j RETURN # let port 53 udp packet enter into the ***REMOVED*** app
-  iptables -t mangle -A ***REMOVED*** -p udp -j TPROXY --on-port 12345 --on-ip 127.0.0.1 --tproxy-mark 0x1/0x1 # use tproxy to forward the packet to local port 12345,meantime mark 1
-  iptables -t mangle -A ***REMOVED*** -p tcp -j TPROXY --on-port 12345 --on-ip 127.0.0.1 --tproxy-mark 0x1/0x1
-  iptables -t mangle -A PREROUTING -j ***REMOVED*** // let other new  packet  processing by the ***REMOVED*** chain
+  iptables -t mangle -N V
+  iptables -t mangle -A V -d 127.0.0.1/32 -j RETURN
+  iptables -t mangle -A V -d 224.0.0.0/4 -j RETURN
+  iptables -t mangle -A V -d 255.255.255.255/32 -j RETURN
+  iptables -t mangle -A V -d 192.168.0.0/16 -p tcp -j RETURN
+  iptables -t mangle -A V -d 192.168.0.0/16 -p udp ! --dport 53 -j RETURN # let port 53 udp packet enter into the v app
+  iptables -t mangle -A V -p udp -j TPROXY --on-port 13345 --on-ip 127.0.0.1 --tproxy-mark 0x1/0x1 # use tproxy to forward the packet to local port 13345,meantime mark 1
+  iptables -t mangle -A V -p tcp -j TPROXY --on-port 13345 --on-ip 127.0.0.1 --tproxy-mark 0x1/0x1
+  iptables -t mangle -A PREROUTING -j V // let other new  packet  processing by the v chain
   
-  iptables -t mangle -N ***REMOVED***_MASK
-  iptables -t mangle -A ***REMOVED***_MASK -d 224.0.0.0/4 -j RETURN
-  iptables -t mangle -A ***REMOVED***_MASK -d 255.255.255.255/32 -j RETURN
-  iptables -t mangle -A ***REMOVED***_MASK -d 192.168.0.0/16 -p tcp -j RETURN
-  iptables -t mangle -A ***REMOVED***_MASK -d 192.168.0.0/16 -p udp ! --dport 53 -j RETURN
-  iptables -t mangle -A ***REMOVED***_MASK -j RETURN -m mark --mark 0xff # let packet which have mark 255 to direct connection
-  iptables -t mangle -A ***REMOVED***_MASK -p udp -j MARK --set-mark 1
-  iptables -t mangle -A ***REMOVED***_MASK -p tcp -j MARK --set-mark 1
-  iptables -t mangle -A OUTPUT -j ***REMOVED***_MASK
+  iptables -t mangle -N V_MASK
+  iptables -t mangle -A V_MASK -d 224.0.0.0/4 -j RETURN
+  iptables -t mangle -A V_MASK -d 255.255.255.255/32 -j RETURN
+  iptables -t mangle -A V_MASK -d 192.168.0.0/16 -p tcp -j RETURN
+  iptables -t mangle -A V_MASK -d 192.168.0.0/16 -p udp ! --dport 53 -j RETURN
+  iptables -t mangle -A V_MASK -j RETURN -m mark --mark 0xff # let packet which have mark 255 to direct connection
+  iptables -t mangle -A V_MASK -p udp -j MARK --set-mark 1
+  iptables -t mangle -A V_MASK -p tcp -j MARK --set-mark 1
+  iptables -t mangle -A OUTPUT -j V_MASK
 ```
-  用执行脚本的方式来验证。待验证成功后，可以放到/etc/firewall.user持久化。***REMOVED*** 客户端的配置暂时就是参考链接里的配置。
-* 参考网上配置把***REMOVED***做成服务的方式，系统启动后自动启动。
+  用执行脚本的方式来验证。待验证成功后，可以放到/etc/firewall.user持久化。v 客户端的配置暂时就是参考链接里的配置。
+* 参考网上配置把v做成服务的方式，系统启动后自动启动。
 
 ### 注意事项
 * B openwrt failsafe mode
@@ -160,7 +158,7 @@ ESNI属于web服务器的客户端范畴的概念，是TLSv1.3的一个扩展功
      结果不乐观的原因：1， 启用ESNI必须启用Doh，即Doh是依赖。 参见[bug](https://bugzilla.mozilla.org/show_bug.cgi?id=1500289). 2,  其他干扰因素比如权威DNS服务器与TLS服务器不同步的话会出现这个问题。
      总之并不能愉快的启用ESNI，特别是在开启Dot的情况下。暂时放弃。
 
-#### Dot over V2ray
+#### Dot over V
 
 ### 性能
 ### DNS分流方案
@@ -173,7 +171,7 @@ Any machine which will accept and forward packets between two networks is a rout
 * route -n == netstat -rn
 * ip rule
 ``` 
-root@OpenWrt:/mnt/sda/***REMOVED***# ip rule
+root@OpenWrt:/mnt/sda/v# ip rule
 0:	from all lookup local
 32765:	from all fwmark 0x1 lookup 100
 32766:	from all lookup main
@@ -212,7 +210,7 @@ root@OpenWrt:/mnt/sda/***REMOVED***# ip rule
 主要添加了ONLYONE链，作用是防止同属于一个连接的其后的包进入tproxy两次。
 还有在步骤三中,添加了iptables -t mangle -A BYPAS_MASK -d 127.0.0.1/32 -j RETURN
 原来参考中，是没有这一句的，原来步骤二三中的直连，不同的就是这一句。
-***REMOVED*** client 配置用就是那个官方tproxy教程的配置，inbounds没有开放53端口，操作系统有自己的dns应用。 
+v client 配置用就是那个官方tproxy教程的配置，inbounds没有开放53端口，操作系统有自己的dns应用。 
 
 # 步骤
 ## 一 策略路由
@@ -234,10 +232,10 @@ iptables -t mangle -N ONLYONE
 iptables -t mangle -A ONLYONE -j MARK --set-mark 1
 iptables -t mangle -A ONLYONE -j ACCEPT
 
-iptables -t mangle -N ***REMOVED***
-iptables -t mangle -A ***REMOVED*** -p udp -j TPROXY --on-port 12345 --tproxy-mark 1
-//用tproxy转发到127.0.0.1 12345，即让***REMOVED***来处理
-iptables -t mangle -A ***REMOVED*** -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1
+iptables -t mangle -N V
+iptables -t mangle -A V -p udp -j TPROXY --on-port 12345 --tproxy-mark 1
+//用tproxy转发到127.0.0.1 13345，即让v来处理
+iptables -t mangle -A V -p tcp -j TPROXY --on-port 13345 --tproxy-mark 1
 
 
 iptables -t mangle -A PREROUTING -j BYPASS  //BYPASS掉一些私有/内网地址
@@ -246,11 +244,11 @@ iptables -t mangle -A PREROUTING -j BYPASS  //BYPASS掉一些私有/内网地址
 // 添加ONLYONE链到mangle表的prerouting链里，即应用ONLY链的规则。 防止同属于一个连接的其后的包进入tproxy两次，
 // 这里让它直接进入ONLYONE链里处理，即直接路由到loop，不再经过tproxy，即不会执行下面这个rule了
 
-iptables -t mangle -A PREROUTING -j ***REMOVED***  
-// 添加***REMOVED***链到mangle表的prerouting链里，即应用规则，即给 UDP/TCP 打标记 1，用tproxy转发至***REMOVED***的 12345 端口并开始路由决策
+iptables -t mangle -A PREROUTING -j V 
+// 添加V链到mangle表的prerouting链里，即应用规则，即给 UDP/TCP 打标记 1，用tproxy转发至v app 的 13345 端口并开始路由决策
 
 
-## 三 透明网关自身生成的包： ***REMOVED***生成的包要发出去，或者还有自身生成的其他包
+## 三 透明网关自身生成的包： v生成的包要发出去，或者还有自身生成的其他包
 
 iptables -t mangle -N BYPASS_MASK
 **iptables -t mangle -A BYPAS_MASK -d 127.0.0.1/32 -j RETURN**
@@ -260,13 +258,13 @@ iptables -t mangle -A BYPASS_MASK -d 255.255.255.255/32 -j RETURN
 iptables -t mangle -A BYPASS_MASK -d 192.168.0.0/16 -p tcp -j RETURN
 iptables -t mangle -A BYPASS_MASK -d 192.168.0.0/16 -p udp ! --dport 53 -j RETURN
 
-iptables -t mangle -N ***REMOVED***_MASK
-iptables -t mangle -A ***REMOVED***_MASK -j RETURN -m mark --mark 0xff //***REMOVED***生成的带mark的包让其直接发出
-iptables -t mangle -A ***REMOVED***_MASK -p udp -j MARK --set-mark 1 // 这可能是哪个app的流量？ 要重新路由到loop
-iptables -t mangle -A ***REMOVED***_MASK -p tcp -j MARK --set-mark 1 // 这是系统dns的s的流量？要重新路由到loop
+iptables -t mangle -N V_MASK
+iptables -t mangle -A V_MASK -j RETURN -m mark --mark 0xff //v生成的带mark的包让其直接发出
+iptables -t mangle -A V_MASK -p udp -j MARK --set-mark 1 // 这可能是哪个app的流量？ 要重新路由到loop
+iptables -t mangle -A V_MASK -p tcp -j MARK --set-mark 1 // 这是系统dns的s的流量？要重新路由到loop
 
 iptables -t mangle -A OUTPUT -j BYPASS_MASK //应用bypass规则
-**iptables -t mangle -A OUTPUT -j ***REMOVED***_MASK** 
+**iptables -t mangle -A OUTPUT -j V_MASK** 
 ```
 
 

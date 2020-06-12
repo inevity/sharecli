@@ -1,16 +1,17 @@
 # Abstract
 Build Openresty/Nginx against OpenSSl which have HTTP3 Boringssl API for QUIC using Cloudflare's Quiche impl.
-使用Cloudflare quiche（QUIC 实现）基于修改的OpenSSL，构建Nginx/OpenResty
-* Openssl支持QUIC draft 27
-* Cloudflare quiche 基于OpenSSL构建
-* Nginx/OpenResty基于OpenSSL构建
+使用 Cloudflare quiche（QUIC 实现）基于修改的 OpenSSL，构建 Nginx/OpenResty
+* OpenSSl1.1.1g 支持 QUIC draft 27
+* Cloudflare quiche master 基于 OpenSSL 构建
+* Nginx/OpenResty 1.17.10 基于 OpenSSL 构建
 
- 
+
 
 # Build process
-mkdir build 
+```
+mkdir build
 cd build
-git clone -b nginx-1.17.10-quic-support --single-branch  https://github.com/inevity/openresty.git 
+git clone -b nginx-1.17.10-quic-support --single-branch  https://github.com/inevity/openresty.git
 git clone -b openresty-packaging-quic-support --single-branch https://github.com/inevity/openresty-packaging.git
 cd openresty
 make clean && make
@@ -43,12 +44,14 @@ sudo openresty-debug -p .
 
 /curl/bin/curl -vvv --http3  https://approachai.com
 tail -f logs/error.log
+```
 
-# notes
+
+# Dev Notes
 ##  OpesnSSL 支持 HTTP3
-本质是实现BoringSSL的QUIC API. 具体参见[Akamai OpenSSL QUIC Branch](https://github.com/akamai/openssl/tree/OpenSSL_1_1_1g-quic) 
-讨论见[WIP: master QUIC support #8797](https://github.com/openssl/openssl/pull/8797) 
-如下最后两个patch是针对BoringSSL对QUIC传输层的方法的修改而来的，目前支持最新Cloudflare QUICHE.
+本质是实现 BoringSSL 的 QUIC API. 具体参见 [Akamai OpenSSL QUIC Branch](https://github.com/akamai/openssl/tree/OpenSSL_1_1_1g-quic)
+讨论见 [WIP: master QUIC support #8797](https://github.com/openssl/openssl/pull/8797)
+如下最后两个 patch 是针对 BoringSSL 对 QUIC 传输层的方法的修改而来的，目前支持最新 Cloudflare QUICHE.
 ```
 ubuntu@easybubuild:~/build/openresty-packaging$ cat deb/openresty-openssl111/debian/patches/series
 openssl-1.1.1c-sess_set_get_cb_yield.patch
@@ -64,21 +67,21 @@ openssl-1.1.1c-sess_set_get_cb_yield.patch
 0001-update-quice-method.patch
 fupdatesetread.patch
 ```
-## Cloudflare QUICHE 针对OpenSLL编译的修改
-原来QUICHE构建只针对BoringSSL，这个patch使得基于OpenSSL构建成为可能。
-讨论见[WIP tls: add feature to build against OpenSSL #126](https://github.com/cloudflare/quiche/pull/126)
-我的修改主要是针对最新的BoringSSL引入的改变，做了相应的改变。 
-比如add 了early data/0 RTT，规避了SSL_get_peer_signature_algorithm，SSL_get_curve_id等
+## Cloudflare QUICHE 针对 OpenSLL 编译的修改
+原来 QUICHE 构建只针对 BoringSSL，这个 patch 使得基于 OpenSSL 构建成为可能。
+讨论见 [WIP tls: add feature to build against OpenSSL #126](https://github.com/cloudflare/quiche/pull/126)
+我的修改主要是针对最新的 BoringSSL 引入的改变，做了相应的改变。
+比如 add 了 early data/0 RTT，规避了 SSL_get_peer_signature_algorithm，SSL_get_curve_id 等
 ```
 ubuntu@easybubuild:~/build/openresty$ ls patches/0001-tls-add-feature-to-build-against-OpenSSL.patch
 patches/0001-tls-add-feature-to-build-against-OpenSSL.patch
 ```
 
-## OpenResty/Nginx的HTTP3支持
-本质需要基于TLS1.3和QUICHE提供的传输层API和HTTP3 API，提供HTTP3 实现。
-核心patch是Cloudflare提供的[基于BorignSSL的nginx quic patch](https://github.com/cloudflare/quiche/tree/master/extras/nginx)
-nginx-1.17.10-quiche.patch是核心patch。
-由于基于pkgconfig方式构建的QUICHE，删除了这个核心patch对nginx里的openssl的构建的修改`auto/lib/openssl/make`， 添加了单独构建OpenSSL包的情况，添加了调试选项。
+## OpenResty/Nginx 的 HTTP3 支持
+本质需要基于 TLS1.3 和 QUICHE 提供的传输层 API 和 HTTP3 API，提供 HTTP3 实现。
+核心 patch 是 Cloudflare 提供的[基于 BorignSSL 的 nginx quic patch](https://github.com/cloudflare/quiche/tree/master/extras/nginx)
+nginx-1.17.10-quiche.patch 是核心 patch。
+由于基于 pkgconfig 方式构建的 QUICHE，删除了这个核心 patch 对 nginx 里的 openssl 的构建的修改`auto/lib/openssl/make`， 添加了单独构建 OpenSSL 包的情况，添加了调试选项。
 
 ```
 ubuntu@easybubuild:~/build/openresty$ ls patches/nginx-1.17.10-quiche* -t
@@ -94,9 +97,10 @@ patches/nginx-1.17.10-quiche.patch                           patches/nginx-1.17.
 
 * The QUIC draft 28
 * RPM package
-* Alpine image     
-* 0-RTT test     
-* test nginx with openssl dir option,which the quiche also need the openssl. 
-
+* Alpine image
+* 0-RTT test
+* test nginx with openssl dir option,which the quiche also need the openssl.
+* hard coded cargo path and openssl lib path in nginx
+* BBR cc 
 
 
