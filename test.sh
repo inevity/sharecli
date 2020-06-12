@@ -2,7 +2,7 @@
 
 set -x 
 # Admin API key goes here
-KEY="***REMOVED***"
+KEY=$KEY
 
 # Split the key into ID and SECRET
 TMPIFS=$IFS
